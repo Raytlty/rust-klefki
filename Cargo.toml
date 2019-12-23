@@ -8,5 +8,6 @@ edition = "2018"
 [workspace]
 members = [
     "rug",
-    "klefki"
+    "klefki",
+    "tests"
 ]

@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies.rug]
 path = "../rug"
 default-features = false
-features = ["integer", "float", "rand"]
+features = ["integer", "float", "rand", "complex"]
