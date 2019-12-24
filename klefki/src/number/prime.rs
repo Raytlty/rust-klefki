@@ -1,21 +1,21 @@
 use rug::{integer::IsPrime, rand::RandState, Assign, Integer};
 pub enum RandomAlgor<'a> {
-    DEFAULT,                                        // Default as NEW_MERSENNE_TWISTER algorithm
-    NEW_MERSENNE_TWISTER, // This algorithm is fast and has good randomness properties.
-    NEW_LINEAR_CONGRUENTIAL(&'a Integer, u32, u32), // algorithm X = (a × X + c) mod 2 ^ m.
-    NEW_LINEAR_CONGRUENTIAL_SIZE(u32),
+    DefaultAlgor,       // Default as NEW_MERSENNE_TWISTER algorithm
+    NewMerSenneTwister, // This algorithm is fast and has good randomness properties.
+    NewLinearCongruential(&'a Integer, u32, u32), // algorithm X = (a × X + c) mod 2 ^ m.
+    NewLinearCongruentialSize(u32),
 }
 
 impl<'a> RandomAlgor<'a> {
     fn generate_random(&self) -> RandState {
         match self {
-            RandomAlgor::DEFAULT | RandomAlgor::NEW_MERSENNE_TWISTER => {
+            RandomAlgor::DefaultAlgor | RandomAlgor::NewMerSenneTwister => {
                 RandState::new_mersenne_twister()
             }
-            RandomAlgor::NEW_LINEAR_CONGRUENTIAL(a, c, m) => {
+            RandomAlgor::NewLinearCongruential(a, c, m) => {
                 RandState::new_linear_congruential(a, *c, *m)
             }
-            RandomAlgor::NEW_LINEAR_CONGRUENTIAL_SIZE(size) => {
+            RandomAlgor::NewLinearCongruentialSize(size) => {
                 match RandState::new_linear_congruential_size(*size) {
                     Some(r) => r,
                     None => unreachable!(),
@@ -65,7 +65,7 @@ mod test {
         };
         let c = 1;
         let m = 100;
-        let rand_algor = RandomAlgor::NEW_LINEAR_CONGRUENTIAL(&a, c, m);
+        let rand_algor = RandomAlgor::NewLinearCongruential(&a, c, m);
         let possible: Integer = generate_prime(256, 5, Some(rand_algor));
         println!("{:?}", possible);
         let sign = match possible.is_probably_prime(5) {

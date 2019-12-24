@@ -6,5 +6,6 @@ mod group;
 mod traits;
 
 use traits::{
-    ConstA, ConstB, ConstP, Field, GeneralField, GeneralGroup, Group, Identity, SealedPrimitive,
+    ConstA, ConstB, ConstN, ConstP, Field, GeneralField, GeneralGroup, Group, Identity, MatMul,
+    SealedPrimitive,
 };

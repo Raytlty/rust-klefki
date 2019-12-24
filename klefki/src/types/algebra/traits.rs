@@ -18,6 +18,10 @@ pub trait ConstB<'a> {
     const B: &'a str;
 }
 
+pub trait ConstN<'a> {
+    const N: &'a str;
+}
+
 pub trait Functor: Add + Sub + Neg + Mul + Div + GeneralOp
 where
     Self: Sized,
