@@ -74,7 +74,7 @@ to_primitive!(ToIsize, to_isize, to_isize_ref, Isize, isize);
 to_primitive!(ToUsize, to_usize, to_usize_ref, Usize, usize);
 
 impl IntPrimitive {
-    fn to_integer(&self) -> Integer {
+    pub fn to_integer(&self) -> Integer {
         match self {
             &IntPrimitive::I32(v) => Integer::from(v),
             &IntPrimitive::U32(v) => Integer::from(v),

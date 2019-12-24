@@ -6,15 +6,15 @@ use std::cell::RefCell;
 use std::cmp::{Ord, PartialEq, PartialOrd};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-pub trait constP<'a> {
+pub trait ConstP<'a> {
     const P: &'a str;
 }
 
-pub trait constA<'a> {
+pub trait ConstA<'a> {
     const A: &'a str;
 }
 
-pub trait constB<'a> {
+pub trait ConstB<'a> {
     const B: &'a str;
 }
 

@@ -1,6 +1,8 @@
+use crate::constrant::COMPLEX_PREC;
+
 macro_rules! identity_finitefield {
-    ($structName: ident) => {
-        impl Identity for $structName {
+    ($structName: ident, $Imp: ident) => {
+        impl $Imp for $structName {
             #[inline]
             fn identity() -> Self {
                 $structName {
@@ -38,7 +40,7 @@ macro_rules! inverse_finitefield {
                 $structName {
                     value: Integer::from_str_radix($structName::P, 16)
                         .expect("Cannot parse from string")
-                        - self.value
+                        - self.value.clone()
                         + Complex::new(COMPLEX_PREC),
                 }
             }
@@ -53,8 +55,8 @@ macro_rules! sec_inverse_finitefield {
             fn sec_inverse(&self) -> Self {
                 let base1 = Integer::from(1) + Complex::new(COMPLEX_PREC);
                 let temp = self.value.clone();
-                let (ref a, ref b) = base1.into_real_img();
-                let (ref c, ref d) = temp.into_real_img();
+                let (ref a, ref b) = base1.into_real_imag();
+                let (ref c, ref d) = temp.into_real_imag();
                 let real = (Float::with_val(COMPLEX_PREC, a * c)
                     + Float::with_val(COMPLEX_PREC, b * d))
                     / (Float::with_val(COMPLEX_PREC, c.pow(2))
@@ -76,17 +78,28 @@ macro_rules! mod_finitefield {
         impl $structName {
             #[inline]
             fn do_mod(&self, a: &dyn Any, b: &Integer) -> Complex {
-                if TypeId::of::<Complex>() == TypeId::of::<a>() {
-                    let (ref real, ref imag) = a.into_real_img();
-                    let a = a.downcast_ref::<Complex>().expect("Parse Complex Error");
-                    let real = Float::with_val(real % b);
-                    let imag = Float::with_val(imag % b);
-                    assert_eq!(Complex, $ret);
+                if TypeId::of::<Complex>() == a.type_id() {
+                    let a = a
+                        .downcast_ref::<Complex>()
+                        .expect("do_mod downcast_ref to Complex Failed")
+                        .clone();
+                    let (ref real, ref imag) = a.into_real_imag();
+                    let real = Float::with_val(
+                        COMPLEX_PREC,
+                        (real - Float::with_val(COMPLEX_PREC, real / b)),
+                    );
+                    let imag = Float::with_val(
+                        COMPLEX_PREC,
+                        (imag - Float::with_val(COMPLEX_PREC, imag / b)),
+                    );
                     Complex::with_val(COMPLEX_PREC, (real, imag))
+                } else if TypeId::of::<Integer>() == a.type_id() {
+                    let a = a
+                        .downcast_ref::<Integer>()
+                        .expect("do_mod downcast_ref to Integer Failed");
+                    Complex::new(COMPLEX_PREC) + Integer::from(a % b)
                 } else {
-                    let a = Integer::from(a);
-                    assert_eq!(Integer, $ret);
-                    Complex::new(COMPLEX_PREC) + a % b
+                    unreachable!();
                 }
             }
         }
@@ -94,8 +107,7 @@ macro_rules! mod_finitefield {
 }
 
 macro_rules! op_finitefield {
-    ($structName: ident, $gty: ty) => {{
-        mod_finitefield!($structName);
+    ($structName: ident) => {
         impl $structName {
             fn do_op(&self, g: &dyn Any) -> Complex {
                 let ng: $structName = if g.type_id() == TypeId::of::<IntPrimitive>() {
@@ -104,17 +116,17 @@ macro_rules! op_finitefield {
                     $structName { value: c }
                 } else if g.type_id() == TypeId::of::<Complex>() {
                     let g = g.downcast_ref::<Complex>().expect("Parse Error");
-                    $structName { value: g }
+                    $structName { value: g.clone() }
                 } else {
                     unreachable!();
                 };
-                let a = self.value + ng.value;
+                let a = self.value.clone() + ng.value;
                 let b =
                     Integer::from_str_radix($structName::P, 16).expect("Cannot parse from string");
                 self.do_mod(&a, &b)
             }
         }
-    }};
+    };
 }
 
 macro_rules! int_to_integer {
