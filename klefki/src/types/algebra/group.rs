@@ -9,12 +9,16 @@ pub struct EllipticCurveCyclicSubgroupSecp256k1 {
     g: Box<dyn Group>,
 }
 
-impl<'a> ConstA<'a> for EllipticCurveCyclicSubgroupSecp256k1 {
-    const A: &'a str = SECP256K1_A;
+impl ConstA for EllipticCurveCyclicSubgroupSecp256k1 {
+    const A: i32 = SECP256K1_A;
 }
 
-impl EllipticCurveCyclicSubgroupSecp256k1 {
-    pub fn new() {}
+impl ConstB for EllipticCurveCyclicSubgroupSecp256k1 {
+    const B: i32 = SECP256K1_B;
+}
+
+impl<'a> ConstN<'a> for EllipticCurveCyclicSubgroupSecp256k1 {
+    const N: &'a str = SECP256K1_N;
 }
 
 impl Field for EllipticCurveCyclicSubgroupSecp256k1 {}
