@@ -34,6 +34,15 @@ impl<'a> ConstP<'a> for FiniteField {
     const P: &'a str = SECP256K1_P;
 }
 
+impl FiniteField {
+    pub fn new(input: &str) -> Self {
+        FiniteField {
+            value: Integer::from_str_radix(input, 16).expect("Cannot parse from string")
+                + Complex::new(COMPLEX_PREC),
+        }
+    }
+}
+
 impl FiniteFieldSecp256k1 {
     pub fn new(input: &str) -> Self {
         FiniteFieldSecp256k1 {
@@ -63,6 +72,13 @@ impl Default for FiniteFieldCyclicSecp256k1 {
     fn default() -> Self {
         let p = FiniteFieldCyclicSecp256k1::P;
         FiniteFieldCyclicSecp256k1::new(p)
+    }
+}
+
+impl Default for FiniteField {
+    fn default() -> Self {
+        let p = FiniteField::P;
+        FiniteField::new(p)
     }
 }
 

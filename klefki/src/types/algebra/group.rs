@@ -3,37 +3,28 @@ use crate::constrant::{
 };
 use crate::types::algebra::field::FiniteField;
 use crate::types::algebra::traits::{
-    ConstA, ConstB, ConstN, ConstP, Field, Group, Identity, ParamField, SecGroup, SecIdentity,
+    ConstA, ConstB, ConstN, ConstP, Field, Group, Identity, SecGroup, SecIdentity,
 };
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::marker::PhantomData;
 
-pub struct EllipticCurveCyclicSubgroupSecp256k1<T>
-where
-    T: ParamField,
+pub struct EllipticCurveCyclicSubgroupSecp256k1
 {
-    x: T,
-    y: T,
-    _marker: PhantomData<T>,
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
 }
 
-impl<T> ConstA for EllipticCurveCyclicSubgroupSecp256k1<T>
-where
-    T: ParamField,
+impl ConstA for EllipticCurveCyclicSubgroupSecp256k1
 {
     const A: i32 = SECP256K1_A;
 }
 
-impl<T> ConstB for EllipticCurveCyclicSubgroupSecp256k1<T>
-where
-    T: ParamField,
+impl ConstB for EllipticCurveCyclicSubgroupSecp256k1
 {
     const B: i32 = SECP256K1_B;
 }
 
-impl<'a, T> ConstN<'a> for EllipticCurveCyclicSubgroupSecp256k1<T>
-where
-    T: ParamField,
+impl<'a> ConstN<'a> for EllipticCurveCyclicSubgroupSecp256k1
 {
     const N: &'a str = SECP256K1_N;
 }
@@ -48,7 +39,8 @@ macro_rules! elliptic_curve_group {
                 }
             }
 
-            fn op(&self, g: &impl ParamField) -> Self {}
+            fn op(&self, g: &dyn Any) -> Self {
+            }
         }
     };
 }

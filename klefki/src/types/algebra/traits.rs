@@ -21,15 +21,17 @@ pub trait Field {
     fn sec_op(&self, g: &dyn Any) -> Self
     where
         Self: Sized;
-}
 
-pub trait ParamField = Field + Pow + Not + MatMul;
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 pub trait Group {
     fn inverse(&self) -> Self
     where
         Self: Sized;
-    fn op(&self, g: &dyn Field) -> Self
+    fn op(&self, g: &dyn Any) -> Self
     where
         Self: Sized;
 }
@@ -38,7 +40,7 @@ pub trait SecGroup {
     fn sec_inverse(&self) -> Self
     where
         Self: Sized;
-    fn sec_op(&self, g: &dyn Field) -> Self
+    fn sec_op(&self, g: &dyn Any) -> Self
     where
         Self: Sized;
 }
