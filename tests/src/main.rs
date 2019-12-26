@@ -21,10 +21,10 @@ trait Field {
     //fn sec_op(&self, rhs: &dyn Any) -> Self
     //where
     //Self: Sized;
-    fn op(&self, rhs: &dyn) -> Self
+    fn op(&self, rhs: &dyn SubFiniteField) -> Self
     where
         Self: Sized;
-    fn sec_op(&self, rhs: &dyn Any) -> Self
+    fn sec_op(&self, rhs: &dyn SubFiniteField) -> Self
     where
         Self: Sized;
 }
@@ -53,44 +53,52 @@ impl Field for FiniteField {
         }
     }
 
-    fn op(&self, rhs: &dyn Any) -> Self {
-        if rhs.type_id() == TypeId::of::<i32>() {
-            let res = rhs
-                .downcast_ref::<i32>()
-                .expect("op downcast_ref to i32 failed");
-            FiniteField {
-                value: self.value + res,
-            }
-        } else if rhs.type_id() == TypeId::of::<FiniteField>() {
-            let res = rhs
-                .downcast_ref::<FiniteField>()
-                .expect("op downcast_ref to FiniteField failed");
-            FiniteField {
-                value: self.value + res.value,
-            }
-        } else {
-            unreachable!();
-        }
+    fn op(&self, rhs: &dyn SubField) -> Self {
+         
     }
 
-    fn sec_op(&self, rhs: &dyn Any) -> Self {
-        if rhs.type_id() == TypeId::of::<i32>() {
-            let res = rhs
-                .downcast_ref::<i32>()
-                .expect("op downcast_ref to i32 failed");
-            FiniteField {
-                value: self.value * res,
-            }
-        } else if rhs.type_id() == TypeId::of::<FiniteField>() {
-            let res = rhs
-                .downcast_ref::<FiniteField>()
-                .expect("op downcast_ref to FiniteField failed");
-            FiniteField {
-                value: self.value * res.value,
-            }
-        } else {
-            unreachable!();
-        }
+    fn sec_op(&self, rhs: &dyn SubField) -> Self {
+
+    }
+
+    //fn op(&self, rhs: &dyn Any) -> Self {
+        //if rhs.type_id() == TypeId::of::<i32>() {
+            //let res = rhs
+                //.downcast_ref::<i32>()
+                //.expect("op downcast_ref to i32 failed");
+            //FiniteField {
+                //value: self.value + res,
+            //}
+        //} else if rhs.type_id() == TypeId::of::<FiniteField>() {
+            //let res = rhs
+                //.downcast_ref::<FiniteField>()
+                //.expect("op downcast_ref to FiniteField failed");
+            //FiniteField {
+                //value: self.value + res.value,
+            //}
+        //} else {
+            //unreachable!();
+        //}
+    //}
+
+    //fn sec_op(&self, rhs: &dyn Any) -> Self {
+        //if rhs.type_id() == TypeId::of::<i32>() {
+            //let res = rhs
+                //.downcast_ref::<i32>()
+                //.expect("op downcast_ref to i32 failed");
+            //FiniteField {
+                //value: self.value * res,
+            //}
+        //} else if rhs.type_id() == TypeId::of::<FiniteField>() {
+            //let res = rhs
+                //.downcast_ref::<FiniteField>()
+                //.expect("op downcast_ref to FiniteField failed");
+            //FiniteField {
+                //value: self.value * res.value,
+            //}
+        //} else {
+            //unreachable!();
+        //}
     }
 }
 
