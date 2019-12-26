@@ -26,7 +26,7 @@ impl<'a> RandomAlgor<'a> {
 }
 
 pub fn generate_prime(bits: u32, reps: u32, rand: Option<RandomAlgor>) -> Integer {
-    let mut rand_algor;
+    let rand_algor;
     let mut random = if rand.is_none() {
         RandState::new()
     } else {
