@@ -3,10 +3,15 @@ use std::any::{Any, TypeId};
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 
-trait SubField {}
-struct SubFiniteField {}
+pub struct Group {
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
+}
 
-impl SubField for SubFiniteField {}
+pub struct SecGroup {
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
+}
 
 trait Field {
     fn inverse() -> Self
@@ -15,16 +20,10 @@ trait Field {
     fn sec_inverse() -> Self
     where
         Self: Sized;
-    //fn op(&self, rhs: &dyn ) -> Self
-    //where
-    //Self: Sized;
-    //fn sec_op(&self, rhs: &dyn Any) -> Self
-    //where
-    //Self: Sized;
-    fn op(&self, rhs: &dyn SubFiniteField) -> Self
+    fn op(&self, rhs: &dyn Any) -> Self
     where
         Self: Sized;
-    fn sec_op(&self, rhs: &dyn SubFiniteField) -> Self
+    fn sec_op(&self, rhs: &dyn Any) -> Self
     where
         Self: Sized;
 }
@@ -53,52 +52,44 @@ impl Field for FiniteField {
         }
     }
 
-    fn op(&self, rhs: &dyn SubField) -> Self {
-         
+    fn op(&self, rhs: &dyn Any) -> Self {
+        if rhs.type_id() == TypeId::of::<i32>() {
+            let res = rhs
+                .downcast_ref::<i32>()
+                .expect("op downcast_ref to i32 failed");
+            FiniteField {
+                value: self.value + res,
+            }
+        } else if rhs.type_id() == TypeId::of::<FiniteField>() {
+            let res = rhs
+                .downcast_ref::<FiniteField>()
+                .expect("op downcast_ref to FiniteField failed");
+            FiniteField {
+                value: self.value + res.value,
+            }
+        } else {
+            unreachable!();
+        }
     }
 
-    fn sec_op(&self, rhs: &dyn SubField) -> Self {
-
-    }
-
-    //fn op(&self, rhs: &dyn Any) -> Self {
-        //if rhs.type_id() == TypeId::of::<i32>() {
-            //let res = rhs
-                //.downcast_ref::<i32>()
-                //.expect("op downcast_ref to i32 failed");
-            //FiniteField {
-                //value: self.value + res,
-            //}
-        //} else if rhs.type_id() == TypeId::of::<FiniteField>() {
-            //let res = rhs
-                //.downcast_ref::<FiniteField>()
-                //.expect("op downcast_ref to FiniteField failed");
-            //FiniteField {
-                //value: self.value + res.value,
-            //}
-        //} else {
-            //unreachable!();
-        //}
-    //}
-
-    //fn sec_op(&self, rhs: &dyn Any) -> Self {
-        //if rhs.type_id() == TypeId::of::<i32>() {
-            //let res = rhs
-                //.downcast_ref::<i32>()
-                //.expect("op downcast_ref to i32 failed");
-            //FiniteField {
-                //value: self.value * res,
-            //}
-        //} else if rhs.type_id() == TypeId::of::<FiniteField>() {
-            //let res = rhs
-                //.downcast_ref::<FiniteField>()
-                //.expect("op downcast_ref to FiniteField failed");
-            //FiniteField {
-                //value: self.value * res.value,
-            //}
-        //} else {
-            //unreachable!();
-        //}
+    fn sec_op(&self, rhs: &dyn Any) -> Self {
+        if rhs.type_id() == TypeId::of::<i32>() {
+            let res = rhs
+                .downcast_ref::<i32>()
+                .expect("op downcast_ref to i32 failed");
+            FiniteField {
+                value: self.value * res,
+            }
+        } else if rhs.type_id() == TypeId::of::<FiniteField>() {
+            let res = rhs
+                .downcast_ref::<FiniteField>()
+                .expect("op downcast_ref to FiniteField failed");
+            FiniteField {
+                value: self.value * res.value,
+            }
+        } else {
+            unreachable!();
+        }
     }
 }
 
@@ -111,13 +102,18 @@ impl Add for FiniteField {
     }
 }
 
-fn test_impl_trait_parameters(x: &impl Field<i32>) {
-    //let x = x as &FiniteField;
-    let y = x.value;
-    println!("{}", y + 2);
+fn from_any(x: &dyn Any) {
+    println!("{:?}", x.type_id() == TypeId::of::<Group>());
 }
 
 fn main() {
     let a = FiniteField { value: 1 };
-    test_impl_trait_parameters(&a);
+    let b = FiniteField { value: 2 };
+    let g = Group {
+        x: Box::new(a),
+        y: Box::new(b),
+    };
+    from_any(&g);
+    println!("{:?}", TypeId::of::<Group>());
+    println!("{:?}", TypeId::of::<SecGroup>());
 }
