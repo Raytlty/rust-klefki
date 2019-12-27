@@ -1,4 +1,6 @@
-use crate::constrant::{IntPrimitive, COMPLEX_PREC, SECP256K1_P};
+use crate::constrant::{
+    IntPrimitive, COMPLEX_PREC, SECP256K1_N, SECP256K1_P, SECP256R1_N, SECP256R1_P,
+};
 use crate::types::algebra::traits::{
     ConstP, Field, Identity, MatMul, Not, Pow as FieldPow, SecIdentity,
 };
@@ -6,11 +8,6 @@ use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
 use std::cmp::PartialEq;
 use std::ops::{Add, Div, Mul, Neg, Sub};
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct FiniteField {
-    pub value: Complex,
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FiniteFieldSecp256k1 {
@@ -22,25 +19,30 @@ pub struct FiniteFieldCyclicSecp256k1 {
     pub value: Complex,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct FiniteFieldSecp256r1 {
+    pub value: Complex,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FiniteFieldCyclicSecp256r1 {
+    pub value: Complex,
+}
+
 impl<'a> ConstP<'a> for FiniteFieldSecp256k1 {
     const P: &'a str = SECP256K1_P;
 }
 
 impl<'a> ConstP<'a> for FiniteFieldCyclicSecp256k1 {
-    const P: &'a str = SECP256K1_P;
+    const P: &'a str = SECP256K1_N;
 }
 
-impl<'a> ConstP<'a> for FiniteField {
-    const P: &'a str = SECP256K1_P;
+impl<'a> ConstP<'a> for FiniteFieldSecp256r1 {
+    const P: &'a str = SECP256R1_P;
 }
 
-impl FiniteField {
-    pub fn new(input: &str) -> Self {
-        FiniteField {
-            value: Integer::from_str_radix(input, 16).expect("Cannot parse from string")
-                + Complex::new(COMPLEX_PREC),
-        }
-    }
+impl<'a> ConstP<'a> for FiniteFieldCyclicSecp256r1 {
+    const P: &'a str = SECP256R1_N;
 }
 
 impl FiniteFieldSecp256k1 {
@@ -55,6 +57,24 @@ impl FiniteFieldSecp256k1 {
 impl FiniteFieldCyclicSecp256k1 {
     pub fn new(input: &str) -> Self {
         FiniteFieldCyclicSecp256k1 {
+            value: Integer::from_str_radix(input, 16).expect("Cannot parse from string")
+                + Complex::new(COMPLEX_PREC),
+        }
+    }
+}
+
+impl FiniteFieldSecp256r1 {
+    pub fn new(input: &str) -> Self {
+        FiniteFieldSecp256r1 {
+            value: Integer::from_str_radix(input, 16).expect("Cannot parse from string")
+                + Complex::new(COMPLEX_PREC),
+        }
+    }
+}
+
+impl FiniteFieldCyclicSecp256r1 {
+    pub fn new(input: &str) -> Self {
+        FiniteFieldCyclicSecp256r1 {
             value: Integer::from_str_radix(input, 16).expect("Cannot parse from string")
                 + Complex::new(COMPLEX_PREC),
         }
@@ -79,6 +99,20 @@ impl Default for FiniteField {
     fn default() -> Self {
         let p = FiniteField::P;
         FiniteField::new(p)
+    }
+}
+
+impl Default for FiniteFieldSecp256r1 {
+    fn default() -> Self {
+        let p = FiniteFieldSecp256r1::P;
+        FiniteFieldSecp256r1::new(p)
+    }
+}
+
+impl Default for FiniteFieldCyclicSecp256r1 {
+    fn default() -> Self {
+        let p = FiniteFieldCyclicSecp256r1::P;
+        FiniteFieldCyclicSecp256r1::new(p)
     }
 }
 
@@ -293,4 +327,5 @@ macro_rules! field_trait_implement {
 
 field_trait_implement!(FiniteFieldSecp256k1);
 field_trait_implement!(FiniteFieldCyclicSecp256k1);
-field_trait_implement!(FiniteField);
+field_trait_implement!(FiniteFieldSecp256r1);
+field_trait_implement!(FiniteFieldCyclicSecp256r1);

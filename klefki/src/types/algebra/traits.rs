@@ -22,7 +22,10 @@ pub trait Field {
     where
         Self: Sized;
 
-    fn as_any(&self) -> &dyn Any {
+    fn as_any(&self) -> &dyn Any
+    where
+        Self: Sized + 'static,
+    {
         self
     }
 }
@@ -61,12 +64,12 @@ pub trait ConstP<'a> {
     const P: &'a str;
 }
 
-pub trait ConstA {
-    const A: i32;
+pub trait ConstA<'a> {
+    const A: &'a str;
 }
 
-pub trait ConstB {
-    const B: i32;
+pub trait ConstB<'a> {
+    const B: &'a str;
 }
 
 pub trait ConstN<'a> {

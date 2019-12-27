@@ -8,8 +8,8 @@ pub const SECP256K1_GX: &'static str =
     "79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798";
 pub const SECP256K1_GY: &'static str =
     "483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8";
-pub const SECP256K1_A: i32 = 0;
-pub const SECP256K1_B: i32 = 7;
+pub const SECP256K1_A: &'static str = "0";
+pub const SECP256K1_B: &'static str = "7";
 
 pub const SECP256R1_P: &'static str =
     "ffffffff00000001000000000000000000000000ffffffffffffffffffffffff";
