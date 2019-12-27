@@ -95,13 +95,6 @@ impl Default for FiniteFieldCyclicSecp256k1 {
     }
 }
 
-impl Default for FiniteField {
-    fn default() -> Self {
-        let p = FiniteField::P;
-        FiniteField::new(p)
-    }
-}
-
 impl Default for FiniteFieldSecp256r1 {
     fn default() -> Self {
         let p = FiniteFieldSecp256r1::P;
@@ -323,6 +316,79 @@ macro_rules! field_trait_implement {
             }
         }
     };
+}
+
+pub(crate) mod cast_to_field {
+    use super::{
+        FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
+        FiniteFieldSecp256r1,
+    };
+    use std::any::{Any, TypeId};
+
+    pub enum RegisterField {
+        V1(FiniteFieldSecp256k1),
+        V2(FiniteFieldSecp256r1),
+        V3(FiniteFieldCyclicSecp256k1),
+        V4(FiniteFieldCyclicSecp256r1),
+    }
+
+    impl RegisterField {
+        pub fn from_any(x: &dyn Any) -> Self {
+            if TypeId::of::<FiniteFieldSecp256k1>() == x.type_id() {
+                let _field = x
+                    .downcast_ref::<FiniteFieldSecp256k1>()
+                    .expect("RegisterField downcast_ref from FiniteFieldSecp256k1 Failed")
+                    .clone();
+                RegisterField::V1(_field)
+            } else if TypeId::of::<FiniteFieldSecp256r1>() == x.type_id() {
+                let _field = x
+                    .downcast_ref::<FiniteFieldSecp256r1>()
+                    .expect("RegisterField downcast_ref from FiniteFieldSecp256r1 Failed")
+                    .clone();
+                RegisterField::V2(_field)
+            } else if TypeId::of::<FiniteFieldCyclicSecp256k1>() == x.type_id() {
+                let _field = x
+                    .downcast_ref::<FiniteFieldCyclicSecp256k1>()
+                    .expect("RegisterField downcast_ref from FiniteFieldCyclicSecp256k1 Failed")
+                    .clone();
+                RegisterField::V3(_field)
+            } else {
+                let _field = x
+                    .downcast_ref::<FiniteFieldCyclicSecp256r1>()
+                    .expect("RegisterField downcast_ref from FiniteFieldCyclicSecp256r1 Failed")
+                    .clone();
+                RegisterField::V4(_field)
+            }
+        }
+
+        pub fn is_v1(&self) -> bool {
+            match self {
+                RegisterField::V1(_) => true,
+                _ => false,
+            }
+        }
+
+        pub fn is_v2(&self) -> bool {
+            match self {
+                RegisterField::V2(_) => true,
+                _ => false,
+            }
+        }
+
+        pub fn is_v3(&self) -> bool {
+            match self {
+                RegisterField::V3(_) => true,
+                _ => false,
+            }
+        }
+
+        pub fn is_v4(&self) -> bool {
+            match self {
+                RegisterField::V4(_) => true,
+                _ => false,
+            }
+        }
+    }
 }
 
 field_trait_implement!(FiniteFieldSecp256k1);

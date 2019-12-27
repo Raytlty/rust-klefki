@@ -4,39 +4,40 @@ use crate::constrant::{
 };
 use crate::types::algebra::field::FiniteFieldSecp256k1;
 use crate::types::algebra::traits::{
-    ConstA, ConstB, ConstN, ConstP, Field, Group, Identity, SecGroup, SecIdentity,
+    ConstA, ConstB, ConstN, ConstP, Group, Identity, SecGroup, SecIdentity,
 };
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
+use std::any::{Any, TypeId};
 use std::marker::PhantomData;
 
 pub struct EllipticCurveCyclicSubgroupSecp256k1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    x: Box<dyn Any>,
+    y: Box<dyn Any>,
 }
 
 pub struct EllipticCurveGroupSecp256k1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    x: Box<dyn Any>,
+    y: Box<dyn Any>,
 }
 
 pub struct JacobianGroupSecp256k1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    x: Box<dyn Any>,
+    y: Box<dyn Any>,
 }
 
 pub struct EllipticCurveGroupSecp256r1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    x: Box<dyn Any>,
+    y: Box<dyn Any>,
 }
 
 pub struct JacobianGroupSecp256r1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    x: Box<dyn Any>,
+    y: Box<dyn Any>,
 }
 
 pub struct EllipticCurveCyclicSubgroupSecp256r1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    x: Box<dyn Any>,
+    y: Box<dyn Any>,
 }
 
 macro_rules! impl_const {
@@ -117,13 +118,66 @@ impl EllipticCurveGroupSecp256r1 {
     }
 }
 
-mod cast_group {
+pub(crate) mod cast_to_group {
 
     use super::{
         EllipticCurveCyclicSubgroupSecp256k1, EllipticCurveCyclicSubgroupSecp256r1,
         EllipticCurveGroupSecp256k1, EllipticCurveGroupSecp256r1, JacobianGroupSecp256k1,
         JacobianGroupSecp256r1,
     };
+    use crate::types::algebra::field::cast_to_field::RegisterField;
+    use std::any::{Any, TypeId};
+
+    pub enum RegisterGroup<'a> {
+        V1(&'a EllipticCurveGroupSecp256k1),
+        V2(&'a EllipticCurveGroupSecp256r1),
+        V3(&'a EllipticCurveCyclicSubgroupSecp256k1),
+        V4(&'a EllipticCurveCyclicSubgroupSecp256r1),
+        V5(&'a JacobianGroupSecp256k1),
+        V6(&'a JacobianGroupSecp256r1),
+    }
+
+    impl<'a> RegisterGroup<'a> {
+        pub fn from_any(x: &'a dyn Any) -> RegisterGroup<'a> {
+            if TypeId::of::<EllipticCurveGroupSecp256k1>() == x.type_id() {
+                RegisterGroup::V1(
+                    x.downcast_ref::<EllipticCurveGroupSecp256k1>().expect(
+                        "RegisterGroup downcast_ref from EllipticCurveGroupSecp256k1 Failed",
+                    ),
+                )
+            } else if TypeId::of::<EllipticCurveGroupSecp256r1>() == x.type_id() {
+                RegisterGroup::V2(
+                    x.downcast_ref::<EllipticCurveGroupSecp256r1>().expect(
+                        "RegisterGroup downcast_ref from EllipticCurveGroupSecp256r1 Failed",
+                    ),
+                )
+            } else if TypeId::of::<EllipticCurveCyclicSubgroupSecp256k1>() == x.type_id() {
+                RegisterGroup::V3(
+                    x.downcast_ref::<EllipticCurveCyclicSubgroupSecp256k1>()
+                        .expect(
+                            "RegisterGroup downcast_ref from EllipticCurveCyclicSubgroupSecp256r1 Failed",
+                        ),
+                )
+            } else if TypeId::of::<EllipticCurveCyclicSubgroupSecp256r1>() == x.type_id() {
+                RegisterGroup::V4(
+                    x.downcast_ref::<EllipticCurveCyclicSubgroupSecp256r1>()
+                        .expect(
+                            "RegisterGroup downcast_ref from EllipticCurveCyclicSubgroupSecp256r1 Failed",
+                        ),
+                )
+            } else if TypeId::of::<JacobianGroupSecp256k1>() == x.type_id() {
+                RegisterGroup::V5(
+                    x.downcast_ref::<JacobianGroupSecp256k1>()
+                        .expect("RegisterGroup downcast_ref from JacobianGroupSecp256k1 Failed"),
+                )
+            } else {
+                RegisterGroup::V6(
+                    x.downcast_ref::<JacobianGroupSecp256r1>()
+                        .expect("RegisterGroup downcast_ref from JacobianGroupSecp256r1 Failed"),
+                )
+            }
+        }
+    }
 }
 
 macro_rules! elliptic_curve_group {
@@ -135,8 +189,6 @@ macro_rules! elliptic_curve_group {
                     y: -self.y.clone(),
                 }
             }
-
-            //fn op(&self, g: &dyn Any) -> Self {}
         }
     };
 }
