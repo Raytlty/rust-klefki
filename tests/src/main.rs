@@ -3,9 +3,9 @@ use std::any::{Any, TypeId};
 use std::cmp::PartialEq;
 use std::fmt::Debug;
 
-pub struct Group {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+pub struct Group<'a> {
+    x: &'a dyn Any,
+    y: &'a dyn Any,
 }
 
 pub struct SecGroup {
@@ -106,14 +106,25 @@ fn from_any(x: &dyn Any) {
     println!("{:?}", x.type_id() == TypeId::of::<Group>());
 }
 
+fn from_any2(x: &dyn Any) {
+    println!("{:?}", x.type_id() == TypeId::of::<FiniteField>());
+}
+
 fn main() {
     let a = FiniteField { value: 1 };
     let b = FiniteField { value: 2 };
     let g = Group {
-        x: Box::new(a),
-        y: Box::new(b),
+        x: &FiniteField { value: 1 },
+        y: &FiniteField { value: 2 },
     };
-    from_any(&g);
-    println!("{:?}", TypeId::of::<Group>());
-    println!("{:?}", TypeId::of::<SecGroup>());
+
+    from_any2(g.x);
+    //let c: Box<dyn Field> = Box::new(FiniteField { value: 3 });
+    //let raw = Box::into_raw(c);
+    //unsafe {
+    //println!("{:?}", raw.type_id());
+    //println!("{:?}", TypeId::of::<FiniteField>());
+    //}
+    //println!("{:?}", TypeId::of::<Group>());
+    //println!("{:?}", TypeId::of::<SecGroup>());
 }

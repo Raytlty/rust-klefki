@@ -10,3 +10,6 @@ edition = "2018"
 path = "../rug"
 default-features = false
 features = ["integer", "float", "rand", "complex"]
+
+[dependencies]
+lazy_static = "1.4.0"
