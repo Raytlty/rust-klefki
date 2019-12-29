@@ -152,6 +152,35 @@ pub(crate) mod cast_to_group {
     }
 
     impl<'a> RegisterGroup<'a> {
+        pub fn into_field(&self) -> (RegisterField, RegisterField) {
+            match self {
+                RegisterGroup::V1(group) => (
+                    RegisterField::from_any(group.x),
+                    RegisterField::from_any(group.y),
+                ),
+                RegisterGroup::V2(group) => (
+                    RegisterField::from_any(group.x),
+                    RegisterField::from_any(group.y),
+                ),
+                RegisterGroup::V3(group) => (
+                    RegisterField::from_any(group.x),
+                    RegisterField::from_any(group.y),
+                ),
+                RegisterGroup::V4(group) => (
+                    RegisterField::from_any(group.x),
+                    RegisterField::from_any(group.y),
+                ),
+                RegisterGroup::V5(group) => (
+                    RegisterField::from_any(group.x),
+                    RegisterField::from_any(group.y),
+                ),
+                RegisterGroup::V6(group) => (
+                    RegisterField::from_any(group.x),
+                    RegisterField::from_any(group.y),
+                ),
+                _ => unreachable!(),
+            }
+        }
         pub fn from_any(x: &'a dyn Any) -> RegisterGroup<'a> {
             if TypeId::of::<EllipticCurveGroupSecp256k1>() == x.type_id() {
                 RegisterGroup::V1(
@@ -205,7 +234,9 @@ macro_rules! elliptic_curve_group {
             }
 
             fn op(&self, g: &dyn Any) -> Self {
-                let
+                let group = RegisterGroup::from_any(g);
+                let x1 = RegisterField::from_any(self.x);
+                let y1 = RegisterField::from_any(self.y);
             }
         }
     };
