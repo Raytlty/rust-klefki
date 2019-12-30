@@ -2,7 +2,7 @@ use crate::constrant::COMPLEX_PREC;
 use crate::types::algebra::{
     field::{
         FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
-        FiniteFieldSecp256r1,
+        FiniteFieldSecp256r1, InCompleteField,
     },
     traits::{Field, Identity, SecIdentity},
 };
@@ -46,31 +46,31 @@ macro_rules! eq_re{
 macro_rules! primitive_cal {
     ($Field1: ty; $Field2: ty; $structName: ident) => {
         impl Add<$Field2> for $Field1 {
-            type Output = Self;
+            type Output = InCompleteField<Complex>;
             fn add(self, other: $Field2) -> Self::Output {
                 self.op(&other.value)
             }
         }
 
         impl Sub<$Field2> for $Field1 {
-            type Output = Self;
+            type Output = InCompleteField<Complex>;
             fn sub(self, other: $Field2) -> Self::Output {
-                let other = other.inverse();
+                let other: $Field2 = other.inverse().into();
                 self.op(&other.value)
             }
         }
 
         impl Mul<$Field2> for $Field1 {
-            type Output = Self;
+            type Output = InCompleteField<Complex>;
             fn mul(self, other: $Field2) -> Self::Output {
                 self.sec_op(&other.value)
             }
         }
 
         impl Div<$Field2> for $Field1 {
-            type Output = Self;
+            type Output = InCompleteField<Complex>;
             fn div(self, other: $Field2) -> Self::Output {
-                let other = other.sec_inverse();
+                let other: $Field2 = other.sec_inverse().into();
                 self.sec_op(&other.value)
             }
         }

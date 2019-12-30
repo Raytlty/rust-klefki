@@ -6,6 +6,11 @@ use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+#[derive(Debug)]
+pub struct InCompleteField<T> {
+    value: T,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct FiniteFieldSecp256k1 {
     pub value: Complex,
@@ -163,8 +168,21 @@ macro_rules! field_trait_implement {
 
         impl Field for $structName {
             #[inline]
-            fn inverse(&self) -> Self {
-                $structName {
+            fn name() -> String {
+                let names = std::any::type_name::<$structName>()
+                    .split("::")
+                    .collect::<Vec<&str>>();
+                format!("{}", names[names.len() - 1])
+            }
+
+            #[inline]
+            fn value(&self) -> Complex {
+                self.value.clone()
+            }
+
+            #[inline]
+            fn inverse(&self) -> InCompleteField<Complex> {
+                InCompleteField {
                     value: Integer::from_str_radix($structName::P, 16)
                         .expect("Cannot parse from string")
                         - self.value.clone()
@@ -173,7 +191,7 @@ macro_rules! field_trait_implement {
             }
 
             #[inline]
-            fn sec_inverse(&self) -> Self {
+            fn sec_inverse(&self) -> InCompleteField<Complex> {
                 let base1 = Integer::from(1) + Complex::new(COMPLEX_PREC);
                 let temp = self.value.clone();
                 let (ref a, ref b) = base1.into_real_imag();
@@ -186,13 +204,13 @@ macro_rules! field_trait_implement {
                     - Float::with_val(COMPLEX_PREC, a * d))
                     / (Float::with_val(COMPLEX_PREC, c.pow(2))
                         + Float::with_val(COMPLEX_PREC, d.pow(2)));
-                $structName {
+                InCompleteField {
                     value: Complex::with_val(COMPLEX_PREC, (real, imag)),
                 }
             }
 
             #[inline]
-            fn op(&self, g: &dyn Any) -> Self {
+            fn op(&self, g: &dyn Any) -> InCompleteField<Complex> {
                 let ng: $structName = if g.type_id() == TypeId::of::<IntPrimitive>() {
                     let g = g.downcast_ref::<IntPrimitive>().expect("Parse Error");
                     let c = Complex::new(COMPLEX_PREC) + g.to_integer();
@@ -207,11 +225,11 @@ macro_rules! field_trait_implement {
                 let b =
                     Integer::from_str_radix($structName::P, 16).expect("Cannot parse from string");
                 let v: Complex = self.do_mod(&a, &b);
-                $structName { value: v }
+                InCompleteField { value: v }
             }
 
             #[inline]
-            fn sec_op(&self, g: &dyn Any) -> Self {
+            fn sec_op(&self, g: &dyn Any) -> InCompleteField<Complex> {
                 let ng: $structName = if g.type_id() == TypeId::of::<IntPrimitive>() {
                     let g = g.downcast_ref::<IntPrimitive>().expect("Parse Error");
                     let c = Complex::new(COMPLEX_PREC) + g.to_integer();
@@ -226,43 +244,43 @@ macro_rules! field_trait_implement {
                 let b =
                     Integer::from_str_radix($structName::P, 16).expect("Cannot parse from string");
                 let v: Complex = self.do_mod(&a, &b);
-                $structName { value: v }
+                InCompleteField { value: v }
             }
         }
 
         impl Add for $structName {
-            type Output = Self;
+            type Output = InCompleteField<Complex>;
             fn add(self, other: Self) -> Self::Output {
                 self.op(&other.value)
             }
         }
 
         impl Sub for $structName {
-            type Output = Self;
+            type Output = InCompleteField<Complex>;
             fn sub(self, other: Self) -> Self::Output {
-                let other = other.inverse();
+                let other = $structName::from(other.inverse());
                 self.op(&other.value)
             }
         }
 
         impl Neg for $structName {
-            type Output = Self;
-            fn neg(self) -> Self {
+            type Output = InCompleteField<Complex>;
+            fn neg(self) -> Self::Output {
                 self.inverse()
             }
         }
 
         impl Mul for $structName {
-            type Output = Self;
+            type Output = InCompleteField<Complex>;
             fn mul(self, other: Self) -> Self::Output {
                 self.sec_op(&other.value)
             }
         }
 
         impl Div for $structName {
-            type Output = Self;
+            type Output = InCompleteField<Complex>;
             fn div(self, other: Self) -> Self::Output {
-                let other = other.sec_inverse();
+                let other = $structName::from(other.sec_inverse());
                 self.sec_op(&other.value)
             }
         }
@@ -278,7 +296,7 @@ macro_rules! field_trait_implement {
 pub(crate) mod cast_to_field {
     use super::{
         Complex, Field, FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1,
-        FiniteFieldSecp256k1, FiniteFieldSecp256r1,
+        FiniteFieldSecp256k1, FiniteFieldSecp256r1, InCompleteField,
     };
     use crate::types::algebra::traits::Identity;
     use std::any::{Any, TypeId};
@@ -305,11 +323,6 @@ pub(crate) mod cast_to_field {
         V2(FiniteFieldSecp256r1),
         V3(FiniteFieldCyclicSecp256k1),
         V4(FiniteFieldCyclicSecp256r1),
-    }
-
-    #[derive(Debug)]
-    pub struct InCompleteField<T> {
-        value: T,
     }
 
     impl PartialEq for RegisterField {

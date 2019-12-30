@@ -1,3 +1,5 @@
+use crate::types::algebra::field::InCompleteField;
+use rug::Complex;
 use std::any::Any;
 
 pub trait Identity {
@@ -8,26 +10,34 @@ pub trait SecIdentity {
     fn sec_identity() -> Self;
 }
 
-pub trait Field {
-    fn inverse(&self) -> Self
-    where
-        Self: Sized;
-    fn sec_inverse(&self) -> Self
-    where
-        Self: Sized;
-    fn op(&self, g: &dyn Any) -> Self
-    where
-        Self: Sized;
-    fn sec_op(&self, g: &dyn Any) -> Self
-    where
-        Self: Sized;
+pub trait FieldClone {
+    fn clone_box(&self) -> Box<dyn Field>;
+}
 
-    fn as_any(&self) -> &dyn Any
-    where
-        Self: Sized + 'static,
-    {
-        self
+impl<T> FieldClone for T
+where
+    T: 'static + Field + Clone,
+{
+    fn clone_box(&self) -> Box<dyn Field> {
+        Box::new(self.clone())
     }
+}
+
+impl Clone for Box<dyn Field> {
+    fn clone(&self) -> Box<dyn Field> {
+        self.clone_box()
+    }
+}
+
+pub trait Field: FieldClone {
+    fn inverse(&self) -> InCompleteField<Complex>;
+    fn sec_inverse(&self) -> InCompleteField<Complex>;
+    fn op(&self, g: &dyn Any) -> InCompleteField<Complex>;
+    fn sec_op(&self, g: &dyn Any) -> InCompleteField<Complex>;
+    fn name() -> String
+    where
+        Self: Sized;
+    fn value(&self) -> Complex;
 }
 
 pub trait Group {

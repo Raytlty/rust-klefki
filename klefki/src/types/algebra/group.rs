@@ -4,7 +4,7 @@ use crate::constrant::{
 };
 use crate::types::algebra::field::{FiniteFieldSecp256k1, FiniteFieldSecp256r1};
 use crate::types::algebra::traits::{
-    ConstA, ConstB, ConstN, ConstP, Group, Identity, SecGroup, SecIdentity,
+    ConstA, ConstB, ConstN, ConstP, Field, Group, Identity, SecGroup, SecIdentity,
 };
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
@@ -17,34 +17,34 @@ lazy_static! {
     static ref SECP256r1Y: FiniteFieldSecp256r1 = FiniteFieldSecp256r1::new(SECP256R1_GY);
 }
 
-pub struct EllipticCurveCyclicSubgroupSecp256k1<'a> {
-    x: &'a dyn Any,
-    y: &'a dyn Any,
+pub struct EllipticCurveCyclicSubgroupSecp256k1 {
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
 }
 
-pub struct EllipticCurveGroupSecp256k1<'a> {
-    x: &'a dyn Any,
-    y: &'a dyn Any,
+pub struct EllipticCurveGroupSecp256k1 {
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
 }
 
-pub struct JacobianGroupSecp256k1<'a> {
-    x: &'a dyn Any,
-    y: &'a dyn Any,
+pub struct JacobianGroupSecp256k1 {
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
 }
 
-pub struct EllipticCurveGroupSecp256r1<'a> {
-    x: &'a dyn Any,
-    y: &'a dyn Any,
+pub struct EllipticCurveGroupSecp256r1 {
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
 }
 
-pub struct JacobianGroupSecp256r1<'a> {
-    x: &'a dyn Any,
-    y: &'a dyn Any,
+pub struct JacobianGroupSecp256r1 {
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
 }
 
-pub struct EllipticCurveCyclicSubgroupSecp256r1<'a> {
-    x: &'a dyn Any,
-    y: &'a dyn Any,
+pub struct EllipticCurveCyclicSubgroupSecp256r1 {
+    x: Box<dyn Field>,
+    y: Box<dyn Field>,
 }
 
 macro_rules! impl_const {
@@ -52,12 +52,10 @@ macro_rules! impl_const {
     (
         $structName:ident
         $impl_lt:tt
-        $struct_lt: tt
         $($trait_name: ident, $variable_name:ident, $trait_input:ident;)*
     ) => {
         $(
-            impl<$impl_lt, $struct_lt> $trait_name<$impl_lt> for $structName<$struct_lt>
-            where $struct_lt: $impl_lt
+            impl<$impl_lt> $trait_name<$impl_lt> for $structName
             {
                 const $variable_name: &$impl_lt str = $trait_input;
             }
@@ -68,7 +66,6 @@ macro_rules! impl_const {
 impl_const!(
     EllipticCurveGroupSecp256k1
     'a
-    'b
     ConstA, A, SECP256K1_A;
     ConstB, B, SECP256K1_B;
     ConstN, N, SECP256K1_N;
@@ -77,7 +74,6 @@ impl_const!(
 impl_const!(
     EllipticCurveCyclicSubgroupSecp256k1
     'a
-    'b
     ConstA, A, SECP256K1_A;
     ConstB, B, SECP256K1_B;
     ConstN, N, SECP256K1_N;
@@ -86,7 +82,6 @@ impl_const!(
 impl_const!(
     JacobianGroupSecp256k1
     'a
-    'b
     ConstA, A, SECP256K1_A;
     ConstB, B, SECP256K1_B;
 );
@@ -94,7 +89,6 @@ impl_const!(
 impl_const!(
     EllipticCurveGroupSecp256r1
     'a
-    'b
     ConstA, A, SECP256K1_A;
     ConstB, B, SECP256K1_B;
 );
@@ -102,7 +96,6 @@ impl_const!(
 impl_const!(
     JacobianGroupSecp256r1
     'a
-    'b
     ConstA, A, SECP256R1_A;
     ConstB, B, SECP256R1_B;
 );
@@ -110,26 +103,25 @@ impl_const!(
 impl_const!(
     EllipticCurveCyclicSubgroupSecp256r1
     'a
-    'b
     ConstA, A, SECP256R1_A;
     ConstB, B, SECP256R1_B;
     ConstN, N, SECP256R1_N;
 );
 
-impl<'a> EllipticCurveGroupSecp256k1<'a> {
-    fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1<'a> {
+impl EllipticCurveGroupSecp256k1 {
+    fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1 {
         EllipticCurveCyclicSubgroupSecp256k1 {
-            x: &SECP256k1X,
-            y: &SECP256k1Y,
+            x: Box::new(*SECP256k1X),
+            y: Box::new(*SECP256k1Y),
         }
     }
 }
 
-impl<'a> EllipticCurveGroupSecp256r1<'a> {
-    fn G_p() -> EllipticCurveGroupSecp256r1<'a> {
+impl EllipticCurveGroupSecp256r1 {
+    fn G_p() -> EllipticCurveGroupSecp256r1 {
         EllipticCurveGroupSecp256r1 {
-            x: &SECP256k1X,
-            y: &SECP256k1Y,
+            x: Box::new(*SECP256k1X),
+            y: Box::new(*SECP256k1Y),
         }
     }
 }
@@ -144,16 +136,16 @@ pub(crate) mod cast_to_group {
     use crate::types::algebra::field::cast_to_field::RegisterField;
     use std::any::{Any, TypeId};
 
-    pub enum RegisterGroup<'a> {
-        V1(&'a EllipticCurveGroupSecp256k1<'a>),
-        V2(&'a EllipticCurveGroupSecp256r1<'a>),
-        V3(&'a EllipticCurveCyclicSubgroupSecp256k1<'a>),
-        V4(&'a EllipticCurveCyclicSubgroupSecp256r1<'a>),
-        V5(&'a JacobianGroupSecp256k1<'a>),
-        V6(&'a JacobianGroupSecp256r1<'a>),
+    pub enum RegisterGroup {
+        V1(EllipticCurveGroupSecp256k1),
+        V2(EllipticCurveGroupSecp256r1),
+        V3(EllipticCurveCyclicSubgroupSecp256k1),
+        V4(EllipticCurveCyclicSubgroupSecp256r1),
+        V5(JacobianGroupSecp256k1),
+        V6(JacobianGroupSecp256r1),
     }
 
-    impl<'a> RegisterGroup<'a> {
+    impl RegisterGroup {
         pub fn into_field(&self) -> (RegisterField, RegisterField) {
             match self {
                 RegisterGroup::V1(group) => (
