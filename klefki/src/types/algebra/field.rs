@@ -6,7 +6,6 @@ use crate::types::algebra::traits::{
 };
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
-use std::cmp::PartialEq;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -236,7 +235,7 @@ macro_rules! field_trait_implement {
         impl Add for $structName {
             type Output = Self;
             fn add(self, other: Self) -> Self::Output {
-                self.op(&other)
+                self.op(&other.value)
             }
         }
 
@@ -244,7 +243,7 @@ macro_rules! field_trait_implement {
             type Output = Self;
             fn sub(self, other: Self) -> Self::Output {
                 let other = other.inverse();
-                self.op(&other)
+                self.op(&other.value)
             }
         }
 
@@ -258,7 +257,7 @@ macro_rules! field_trait_implement {
         impl Mul for $structName {
             type Output = Self;
             fn mul(self, other: Self) -> Self::Output {
-                self.sec_op(&other)
+                self.sec_op(&other.value)
             }
         }
 
@@ -266,12 +265,13 @@ macro_rules! field_trait_implement {
             type Output = Self;
             fn div(self, other: Self) -> Self::Output {
                 let other = other.sec_inverse();
-                self.sec_op(&other)
+                self.sec_op(&other.value)
             }
         }
 
         impl FieldPow for $structName {
-            fn pow(&self, rhs: $structName) -> Self {
+            type Output = Self;
+            fn pow(&self, rhs: Self) -> Self::Output {
                 let (real, _) = rhs.value.into_real_imag();
                 let (identity, _) = $structName::identity().value.into_real_imag();
                 let times = match real.to_integer() {
@@ -290,7 +290,8 @@ macro_rules! field_trait_implement {
         }
 
         impl MatMul for $structName {
-            fn mat_mul(&self, rhs: $structName) -> Self {
+            type Output = Self;
+            fn mat_mul(&self, rhs: Self) -> Self::Output {
                 let (real, _) = rhs.value.into_real_imag();
                 let (identity, _) = $structName::identity().value.into_real_imag();
                 let times = match real.to_integer() {
@@ -309,10 +310,8 @@ macro_rules! field_trait_implement {
         }
 
         impl Not for $structName {
-            fn not(&self) -> Self {
-                $structName {
-                    value: self.value.clone().neg(),
-                }
+            fn not(&self) -> bool {
+                self != &$structName::identity()
             }
         }
     };

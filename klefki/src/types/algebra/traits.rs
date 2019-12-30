@@ -48,16 +48,18 @@ pub trait SecGroup {
         Self: Sized;
 }
 
-pub trait MatMul {
-    fn mat_mul(&self, rhs: Self) -> Self;
+pub trait MatMul<Rhs = Self> {
+    type Output;
+    fn mat_mul(&self, rhs: Rhs) -> Self::Output;
 }
 
-pub trait Pow {
-    fn pow(&self, rhs: Self) -> Self;
+pub trait Pow<Rhs = Self> {
+    type Output;
+    fn pow(&self, rhs: Rhs) -> Self::Output;
 }
 
 pub trait Not {
-    fn not(&self) -> Self;
+    fn not(&self) -> bool;
 }
 
 pub trait ConstP<'a> {

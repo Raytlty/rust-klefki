@@ -2,7 +2,7 @@ use crate::constrant::{
     IntPrimitive, COMPLEX_PREC, SECP256K1_A, SECP256K1_B, SECP256K1_GX, SECP256K1_GY, SECP256K1_N,
     SECP256K1_P, SECP256R1_A, SECP256R1_B, SECP256R1_GX, SECP256R1_GY, SECP256R1_N, SECP256R1_P,
 };
-use crate::types::algebra::field::FiniteFieldSecp256k1;
+use crate::types::algebra::field::{FiniteFieldSecp256k1, FiniteFieldSecp256r1};
 use crate::types::algebra::traits::{
     ConstA, ConstB, ConstN, ConstP, Group, Identity, SecGroup, SecIdentity,
 };
@@ -13,6 +13,8 @@ use std::marker::PhantomData;
 lazy_static! {
     static ref SECP256k1X: FiniteFieldSecp256k1 = FiniteFieldSecp256k1::new(SECP256K1_GX);
     static ref SECP256k1Y: FiniteFieldSecp256k1 = FiniteFieldSecp256k1::new(SECP256K1_GY);
+    static ref SECP256r1X: FiniteFieldSecp256r1 = FiniteFieldSecp256r1::new(SECP256R1_GX);
+    static ref SECP256r1Y: FiniteFieldSecp256r1 = FiniteFieldSecp256r1::new(SECP256R1_GY);
 }
 
 pub struct EllipticCurveCyclicSubgroupSecp256k1<'a> {
@@ -224,8 +226,8 @@ pub(crate) mod cast_to_group {
 }
 
 macro_rules! elliptic_curve_group {
-    ($structName: ident, $fieldStruct: ident) => {
-        impl<$fieldStruct> Group for $structName<$fieldStruct> {
+    ($structName: ident) => {
+        impl Group for $structName {
             fn inverse(&self) -> Self {
                 $structName {
                     x: self.x.clone(),
@@ -237,6 +239,7 @@ macro_rules! elliptic_curve_group {
                 let group = RegisterGroup::from_any(g);
                 let x1 = RegisterField::from_any(self.x);
                 let y1 = RegisterField::from_any(self.y);
+                let (x2, y2) = group.into_field();
             }
         }
     };
