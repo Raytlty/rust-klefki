@@ -17,31 +17,37 @@ lazy_static! {
     static ref SECP256r1Y: FiniteFieldSecp256r1 = FiniteFieldSecp256r1::new(SECP256R1_GY);
 }
 
+#[derive(Clone)]
 pub struct EllipticCurveCyclicSubgroupSecp256k1 {
     x: Box<dyn Field>,
     y: Box<dyn Field>,
 }
 
+#[derive(Clone)]
 pub struct EllipticCurveGroupSecp256k1 {
     x: Box<dyn Field>,
     y: Box<dyn Field>,
 }
 
+#[derive(Clone)]
 pub struct JacobianGroupSecp256k1 {
     x: Box<dyn Field>,
     y: Box<dyn Field>,
 }
 
+#[derive(Clone)]
 pub struct EllipticCurveGroupSecp256r1 {
     x: Box<dyn Field>,
     y: Box<dyn Field>,
 }
 
+#[derive(Clone)]
 pub struct JacobianGroupSecp256r1 {
     x: Box<dyn Field>,
     y: Box<dyn Field>,
 }
 
+#[derive(Clone)]
 pub struct EllipticCurveCyclicSubgroupSecp256r1 {
     x: Box<dyn Field>,
     y: Box<dyn Field>,
@@ -111,8 +117,8 @@ impl_const!(
 impl EllipticCurveGroupSecp256k1 {
     fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1 {
         EllipticCurveCyclicSubgroupSecp256k1 {
-            x: Box::new(*SECP256k1X),
-            y: Box::new(*SECP256k1Y),
+            x: Box::new(SECP256k1X.clone()),
+            y: Box::new(SECP256k1Y.clone()),
         }
     }
 }
@@ -120,8 +126,8 @@ impl EllipticCurveGroupSecp256k1 {
 impl EllipticCurveGroupSecp256r1 {
     fn G_p() -> EllipticCurveGroupSecp256r1 {
         EllipticCurveGroupSecp256r1 {
-            x: Box::new(*SECP256k1X),
-            y: Box::new(*SECP256k1Y),
+            x: Box::new(SECP256k1X.clone()),
+            y: Box::new(SECP256k1Y.clone()),
         }
     }
 }
@@ -149,68 +155,76 @@ pub(crate) mod cast_to_group {
         pub fn into_field(&self) -> (RegisterField, RegisterField) {
             match self {
                 RegisterGroup::V1(group) => (
-                    RegisterField::from_any(group.x),
-                    RegisterField::from_any(group.y),
+                    RegisterField::from_field_boxed(&group.x),
+                    RegisterField::from_field_boxed(&group.y),
                 ),
                 RegisterGroup::V2(group) => (
-                    RegisterField::from_any(group.x),
-                    RegisterField::from_any(group.y),
+                    RegisterField::from_field_boxed(&group.x),
+                    RegisterField::from_field_boxed(&group.y),
                 ),
                 RegisterGroup::V3(group) => (
-                    RegisterField::from_any(group.x),
-                    RegisterField::from_any(group.y),
+                    RegisterField::from_field_boxed(&group.x),
+                    RegisterField::from_field_boxed(&group.y),
                 ),
                 RegisterGroup::V4(group) => (
-                    RegisterField::from_any(group.x),
-                    RegisterField::from_any(group.y),
+                    RegisterField::from_field_boxed(&group.x),
+                    RegisterField::from_field_boxed(&group.y),
                 ),
                 RegisterGroup::V5(group) => (
-                    RegisterField::from_any(group.x),
-                    RegisterField::from_any(group.y),
+                    RegisterField::from_field_boxed(&group.x),
+                    RegisterField::from_field_boxed(&group.y),
                 ),
                 RegisterGroup::V6(group) => (
-                    RegisterField::from_any(group.x),
-                    RegisterField::from_any(group.y),
+                    RegisterField::from_field_boxed(&group.x),
+                    RegisterField::from_field_boxed(&group.y),
                 ),
                 _ => unreachable!(),
             }
         }
-        pub fn from_any(x: &'a dyn Any) -> RegisterGroup<'a> {
+        pub fn from_any(x: &dyn Any) -> RegisterGroup {
             if TypeId::of::<EllipticCurveGroupSecp256k1>() == x.type_id() {
                 RegisterGroup::V1(
-                    x.downcast_ref::<EllipticCurveGroupSecp256k1>().expect(
-                        "RegisterGroup downcast_ref from EllipticCurveGroupSecp256k1 Failed",
-                    ),
+                    x.downcast_ref::<EllipticCurveGroupSecp256k1>()
+                        .expect(
+                            "RegisterGroup downcast_ref from EllipticCurveGroupSecp256k1 Failed",
+                        )
+                        .clone(),
                 )
             } else if TypeId::of::<EllipticCurveGroupSecp256r1>() == x.type_id() {
                 RegisterGroup::V2(
-                    x.downcast_ref::<EllipticCurveGroupSecp256r1>().expect(
-                        "RegisterGroup downcast_ref from EllipticCurveGroupSecp256r1 Failed",
-                    ),
+                    x.downcast_ref::<EllipticCurveGroupSecp256r1>()
+                        .expect(
+                            "RegisterGroup downcast_ref from EllipticCurveGroupSecp256r1 Failed",
+                        )
+                        .clone(),
                 )
             } else if TypeId::of::<EllipticCurveCyclicSubgroupSecp256k1>() == x.type_id() {
                 RegisterGroup::V3(
-                    x.downcast_ref::<EllipticCurveCyclicSubgroupSecp256k1>()
+                   x.downcast_ref::<EllipticCurveCyclicSubgroupSecp256k1>()
                         .expect(
                             "RegisterGroup downcast_ref from EllipticCurveCyclicSubgroupSecp256r1 Failed",
-                        ),
+                        )
+                        .clone()
                 )
             } else if TypeId::of::<EllipticCurveCyclicSubgroupSecp256r1>() == x.type_id() {
                 RegisterGroup::V4(
                     x.downcast_ref::<EllipticCurveCyclicSubgroupSecp256r1>()
                         .expect(
                             "RegisterGroup downcast_ref from EllipticCurveCyclicSubgroupSecp256r1 Failed",
-                        ),
+                        )
+                        .clone()
                 )
             } else if TypeId::of::<JacobianGroupSecp256k1>() == x.type_id() {
                 RegisterGroup::V5(
                     x.downcast_ref::<JacobianGroupSecp256k1>()
-                        .expect("RegisterGroup downcast_ref from JacobianGroupSecp256k1 Failed"),
+                        .expect("RegisterGroup downcast_ref from JacobianGroupSecp256k1 Failed")
+                        .clone(),
                 )
             } else {
                 RegisterGroup::V6(
                     x.downcast_ref::<JacobianGroupSecp256r1>()
-                        .expect("RegisterGroup downcast_ref from JacobianGroupSecp256r1 Failed"),
+                        .expect("RegisterGroup downcast_ref from JacobianGroupSecp256r1 Failed")
+                        .clone(),
                 )
             }
         }
@@ -229,8 +243,8 @@ macro_rules! elliptic_curve_group {
 
             fn op(&self, g: &dyn Any) -> Self {
                 let group = RegisterGroup::from_any(g);
-                let x1 = RegisterField::from_any(self.x);
-                let y1 = RegisterField::from_any(self.y);
+                let x1 = RegisterField::from_field_boxed(self.x);
+                let y1 = RegisterField::from_field_boxed(self.y);
                 let (x2, y2) = group.into_field();
             }
         }

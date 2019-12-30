@@ -168,7 +168,7 @@ macro_rules! field_trait_implement {
 
         impl Field for $structName {
             #[inline]
-            fn name() -> String {
+            fn name(&self) -> String {
                 let names = std::any::type_name::<$structName>()
                     .split("::")
                     .collect::<Vec<&str>>();
@@ -421,6 +421,18 @@ pub(crate) mod cast_to_field {
                 } else {
                     unreachable!();
                 }
+            }
+        }
+
+        pub fn from_field_boxed(x: &Box<dyn Field>) -> Self {
+            if x.name() == String::from("FiniteFieldSecp256k1") {
+                RegisterField::V1(FiniteFieldSecp256k1 { value: x.value() })
+            } else if x.name() == String::from("FiniteFieldSecp256r1") {
+                RegisterField::V2(FiniteFieldSecp256r1 { value: x.value() })
+            } else if x.name() == String::from("FiniteFieldCyclicSecp256k1") {
+                RegisterField::V3(FiniteFieldCyclicSecp256k1 { value: x.value() })
+            } else {
+                RegisterField::V4(FiniteFieldCyclicSecp256r1 { value: x.value() })
             }
         }
 

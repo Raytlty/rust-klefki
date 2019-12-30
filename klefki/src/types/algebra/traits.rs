@@ -34,9 +34,7 @@ pub trait Field: FieldClone {
     fn sec_inverse(&self) -> InCompleteField<Complex>;
     fn op(&self, g: &dyn Any) -> InCompleteField<Complex>;
     fn sec_op(&self, g: &dyn Any) -> InCompleteField<Complex>;
-    fn name() -> String
-    where
-        Self: Sized;
+    fn name(&self) -> String;
     fn value(&self) -> Complex;
 }
 

@@ -3,7 +3,7 @@ mod macros;
 mod compare;
 mod concrete;
 mod field;
-//mod group;
+mod group;
 mod traits;
 
 //use traits::{
