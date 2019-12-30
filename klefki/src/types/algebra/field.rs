@@ -319,11 +319,14 @@ macro_rules! field_trait_implement {
 
 pub(crate) mod cast_to_field {
     use super::{
-        FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
-        FiniteFieldSecp256r1,
+        Complex, Field, FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1,
+        FiniteFieldSecp256k1, FiniteFieldSecp256r1,
     };
+    use crate::types::algebra::traits::{MatMul, Pow as FieldPow};
     use std::any::{Any, TypeId};
+    use std::ops::{Add, Div, Mul, Sub};
 
+    #[derive(Debug, Clone)]
     pub enum RegisterField {
         V1(FiniteFieldSecp256k1),
         V2(FiniteFieldSecp256r1),
@@ -331,7 +334,53 @@ pub(crate) mod cast_to_field {
         V4(FiniteFieldCyclicSecp256r1),
     }
 
+    #[derive(Debug)]
+    pub struct InCompleteField<T> {
+        value: T,
+    }
+
+    impl Add for RegisterField {
+        type Output = InCompleteField<Complex>;
+        fn add(self, other: Self) -> Self::Output {
+            let v = self.into_inner() + other.into_inner();
+            InCompleteField { value: v }
+        }
+    }
+
+    impl Div for RegisterField {
+        type Output = InCompleteField<Complex>;
+        fn div(self, other: Self) -> Self::Output {
+            let v = self.into_inner() / other.into_inner();
+            InCompleteField { value: v }
+        }
+    }
+
+    impl Sub for RegisterField {
+        type Output = InCompleteField<Complex>;
+        fn sub(self, other: Self) -> Self::Output {
+            let v = self.into_inner() - other.into_inner();
+            InCompleteField { value: v }
+        }
+    }
+
+    impl Mul for RegisterField {
+        type Output = InCompleteField<Complex>;
+        fn mul(self, other: Self) -> Self::Output {
+            let v = self.into_inner() * other.into_inner();
+            InCompleteField { value: v }
+        }
+    }
+
     impl RegisterField {
+        pub fn into_inner(&self) -> Complex {
+            match self {
+                RegisterField::V1(f) => f.value.clone(),
+                RegisterField::V2(f) => f.value.clone(),
+                RegisterField::V3(f) => f.value.clone(),
+                RegisterField::V4(f) => f.value.clone(),
+            }
+        }
+
         pub fn from_any(x: &dyn Any) -> Self {
             if TypeId::of::<FiniteFieldSecp256k1>() == x.type_id() {
                 let _field = x

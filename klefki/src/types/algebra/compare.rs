@@ -168,3 +168,26 @@ primitive_cal!(FiniteFieldCyclicSecp256r1; FiniteFieldSecp256r1; FiniteFieldCycl
 
 primitive_cal!(FiniteFieldCyclicSecp256k1; FiniteFieldCyclicSecp256r1; FiniteFieldCyclicSecp256k1);
 primitive_cal!(FiniteFieldCyclicSecp256r1; FiniteFieldCyclicSecp256k1; FiniteFieldCyclicSecp256r1);
+
+#[cfg(test)]
+mod test {
+    use super::{
+        FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
+        FiniteFieldSecp256r1,
+    };
+
+    #[test]
+    fn compare0x001() {
+        let f1 = FiniteFieldSecp256k1::default();
+        let f2 = FiniteFieldSecp256r1::default();
+        assert_eq!(f1 == f2, false);
+    }
+
+    #[test]
+    fn compare0x002() {
+        use crate::constrant::SECP256K1_P;
+        let f1 = FiniteFieldSecp256k1::default();
+        let f2 = FiniteFieldSecp256r1::new(SECP256K1_P);
+        assert_eq!(f1 == f2, true);
+    }
+}
