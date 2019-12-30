@@ -48,7 +48,7 @@ mod test {
 
     #[test]
     fn test0x01() {
-        let possible: Integer = generate_prime(256, 5, None);
+        let possible: Integer = generate_prime(1024, 5, None);
         println!("{:?}", possible);
         let sign = match possible.is_probably_prime(5) {
             IsPrime::Yes | IsPrime::Probably => true,

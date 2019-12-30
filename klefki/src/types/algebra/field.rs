@@ -284,6 +284,21 @@ pub(crate) mod cast_to_field {
     use std::any::{Any, TypeId};
     use std::ops::{Add, Div, Mul, Sub};
 
+    macro_rules! from_incomplete_to_field {
+        ($structName: ident) => {
+            impl From<InCompleteField<Complex>> for $structName {
+                fn from(item: InCompleteField<Complex>) -> $structName {
+                    $structName { value: item.value }
+                }
+            }
+        };
+    }
+
+    from_incomplete_to_field!(FiniteFieldSecp256k1);
+    from_incomplete_to_field!(FiniteFieldSecp256r1);
+    from_incomplete_to_field!(FiniteFieldCyclicSecp256k1);
+    from_incomplete_to_field!(FiniteFieldCyclicSecp256r1);
+
     #[derive(Debug, Clone)]
     pub enum RegisterField {
         V1(FiniteFieldSecp256k1),
@@ -295,6 +310,14 @@ pub(crate) mod cast_to_field {
     #[derive(Debug)]
     pub struct InCompleteField<T> {
         value: T,
+    }
+
+    impl PartialEq for RegisterField {
+        fn eq(&self, other: &RegisterField) -> bool {
+            let lhs = self.into_inner();
+            let rhs = other.into_inner();
+            lhs == rhs
+        }
     }
 
     impl Add for RegisterField {
@@ -348,31 +371,43 @@ pub(crate) mod cast_to_field {
             }
         }
 
-        pub fn from_any(x: &dyn Any) -> Self {
-            if TypeId::of::<FiniteFieldSecp256k1>() == x.type_id() {
-                let _field = x
-                    .downcast_ref::<FiniteFieldSecp256k1>()
-                    .expect("RegisterField downcast_ref from FiniteFieldSecp256k1 Failed")
-                    .clone();
-                RegisterField::V1(_field)
-            } else if TypeId::of::<FiniteFieldSecp256r1>() == x.type_id() {
-                let _field = x
-                    .downcast_ref::<FiniteFieldSecp256r1>()
-                    .expect("RegisterField downcast_ref from FiniteFieldSecp256r1 Failed")
-                    .clone();
-                RegisterField::V2(_field)
-            } else if TypeId::of::<FiniteFieldCyclicSecp256k1>() == x.type_id() {
-                let _field = x
-                    .downcast_ref::<FiniteFieldCyclicSecp256k1>()
-                    .expect("RegisterField downcast_ref from FiniteFieldCyclicSecp256k1 Failed")
-                    .clone();
-                RegisterField::V3(_field)
-            } else {
-                let _field = x
-                    .downcast_ref::<FiniteFieldCyclicSecp256r1>()
-                    .expect("RegisterField downcast_ref from FiniteFieldCyclicSecp256r1 Failed")
-                    .clone();
-                RegisterField::V4(_field)
+        pub fn from_any(x: Box<dyn Any>) -> Self {
+            unsafe {
+                let ptr = Box::into_raw(x);
+                if let Some(r) = ptr.as_ref() {
+                    let x = r as &dyn Any;
+                    if TypeId::of::<FiniteFieldSecp256k1>() == x.type_id() {
+                        let _field = x
+                            .downcast_ref::<FiniteFieldSecp256k1>()
+                            .expect("RegisterField downcast_ref from FiniteFieldSecp256k1 Failed")
+                            .clone();
+                        RegisterField::V1(_field)
+                    } else if TypeId::of::<FiniteFieldSecp256r1>() == x.type_id() {
+                        let _field = x
+                            .downcast_ref::<FiniteFieldSecp256r1>()
+                            .expect("RegisterField downcast_ref from FiniteFieldSecp256r1 Failed")
+                            .clone();
+                        RegisterField::V2(_field)
+                    } else if TypeId::of::<FiniteFieldCyclicSecp256k1>() == x.type_id() {
+                        let _field = x
+                            .downcast_ref::<FiniteFieldCyclicSecp256k1>()
+                            .expect(
+                                "RegisterField downcast_ref from FiniteFieldCyclicSecp256k1 Failed",
+                            )
+                            .clone();
+                        RegisterField::V3(_field)
+                    } else {
+                        let _field = x
+                            .downcast_ref::<FiniteFieldCyclicSecp256r1>()
+                            .expect(
+                                "RegisterField downcast_ref from FiniteFieldCyclicSecp256r1 Failed",
+                            )
+                            .clone();
+                        RegisterField::V4(_field)
+                    }
+                } else {
+                    unreachable!();
+                }
             }
         }
 
