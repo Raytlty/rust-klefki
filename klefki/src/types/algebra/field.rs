@@ -1,9 +1,7 @@
 use crate::constrant::{
     IntPrimitive, COMPLEX_PREC, SECP256K1_N, SECP256K1_P, SECP256R1_N, SECP256R1_P,
 };
-use crate::types::algebra::traits::{
-    ConstP, Field, Identity, MatMul, Not, Pow as FieldPow, SecIdentity,
-};
+use crate::types::algebra::traits::{ConstP, Field, Identity, Not, SecIdentity};
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -269,46 +267,6 @@ macro_rules! field_trait_implement {
             }
         }
 
-        impl FieldPow for $structName {
-            type Output = Self;
-            fn pow(&self, rhs: Self) -> Self::Output {
-                let (real, _) = rhs.value.into_real_imag();
-                let (identity, _) = $structName::identity().value.into_real_imag();
-                let times = match real.to_integer() {
-                    Some(i) => i,
-                    None => unreachable!(),
-                };
-                let init = match identity.to_integer() {
-                    Some(i) => i,
-                    None => unreachable!(),
-                };
-
-                $structName {
-                    value: Integer::from(init * times) + Complex::new(COMPLEX_PREC),
-                }
-            }
-        }
-
-        impl MatMul for $structName {
-            type Output = Self;
-            fn mat_mul(&self, rhs: Self) -> Self::Output {
-                let (real, _) = rhs.value.into_real_imag();
-                let (identity, _) = $structName::identity().value.into_real_imag();
-                let times = match real.to_integer() {
-                    Some(i) => i,
-                    None => unreachable!(),
-                };
-                let init = match identity.to_integer() {
-                    Some(i) => i,
-                    None => unreachable!(),
-                };
-
-                $structName {
-                    value: Integer::from(init * times) + Complex::new(COMPLEX_PREC),
-                }
-            }
-        }
-
         impl Not for $structName {
             fn not(&self) -> bool {
                 self != &$structName::identity()
@@ -322,7 +280,7 @@ pub(crate) mod cast_to_field {
         Complex, Field, FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1,
         FiniteFieldSecp256k1, FiniteFieldSecp256r1,
     };
-    use crate::types::algebra::traits::{MatMul, Pow as FieldPow};
+    use crate::types::algebra::traits::Identity;
     use std::any::{Any, TypeId};
     use std::ops::{Add, Div, Mul, Sub};
 
@@ -378,6 +336,15 @@ pub(crate) mod cast_to_field {
                 RegisterField::V2(f) => f.value.clone(),
                 RegisterField::V3(f) => f.value.clone(),
                 RegisterField::V4(f) => f.value.clone(),
+            }
+        }
+
+        pub fn identity_value(&self) -> Complex {
+            match self {
+                RegisterField::V1(_) => FiniteFieldSecp256k1::identity().value,
+                RegisterField::V2(_) => FiniteFieldSecp256r1::identity().value,
+                RegisterField::V3(_) => FiniteFieldCyclicSecp256k1::identity().value,
+                RegisterField::V4(_) => FiniteFieldCyclicSecp256r1::identity().value,
             }
         }
 

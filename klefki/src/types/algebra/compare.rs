@@ -4,7 +4,7 @@ use crate::types::algebra::{
         FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
         FiniteFieldSecp256r1,
     },
-    traits::{Field, Identity, MatMul, Pow as FieldPow, SecIdentity},
+    traits::{Field, Identity, SecIdentity},
 };
 use rug::{Complex, Float, Integer};
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -72,46 +72,6 @@ macro_rules! primitive_cal {
             fn div(self, other: $Field2) -> Self::Output {
                 let other = other.sec_inverse();
                 self.sec_op(&other.value)
-            }
-        }
-
-        impl FieldPow<$Field2> for $Field1 {
-            type Output = Self;
-            fn pow(&self, rhs: $Field2) -> Self::Output {
-                let (real, _) = rhs.value.into_real_imag();
-                let (identity, _) = $structName::identity().value.into_real_imag();
-                let times = match real.to_integer() {
-                    Some(i) => i,
-                    None => unreachable!(),
-                };
-                let init = match identity.to_integer() {
-                    Some(i) => i,
-                    None => unreachable!(),
-                };
-
-                $structName {
-                    value: Integer::from(init * times) + Complex::new(COMPLEX_PREC),
-                }
-            }
-        }
-
-        impl MatMul<$Field2> for $Field1 {
-            type Output = Self;
-            fn mat_mul(&self, rhs: $Field2) -> Self::Output {
-                let (real, _) = rhs.value.into_real_imag();
-                let (identity, _) = $structName::identity().value.into_real_imag();
-                let times = match real.to_integer() {
-                    Some(i) => i,
-                    None => unreachable!(),
-                };
-                let init = match identity.to_integer() {
-                    Some(i) => i,
-                    None => unreachable!(),
-                };
-
-                $structName {
-                    value: Integer::from(init * times) + Complex::new(COMPLEX_PREC),
-                }
             }
         }
     };
