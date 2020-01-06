@@ -54,6 +54,30 @@ impl FiniteFieldSecp256k1 {
                 + Complex::new(COMPLEX_PREC),
         }
     }
+
+    pub fn mat_mul<T>(&self, x: T) -> Self
+    where
+        T: Into<Integer>,
+    {
+        let int: Integer = x.into();
+        let ident = FiniteFieldSecp256k1::identity();
+        let this = FiniteFieldSecp256k1 {
+            value: int + Complex::new(COMPLEX_PREC),
+        };
+        FiniteFieldSecp256k1::from(this * ident)
+    }
+
+    pub fn pow<T>(&self, x: T) -> Self
+    where
+        T: Into<Integer>,
+    {
+        let int: Integer = x.into();
+        let ident = FiniteFieldSecp256k1::identity();
+        let this = FiniteFieldSecp256k1 {
+            value: int + Complex::new(COMPLEX_PREC),
+        };
+        FiniteFieldSecp256k1::from(this * ident)
+    }
 }
 
 impl FiniteFieldCyclicSecp256k1 {
@@ -62,6 +86,30 @@ impl FiniteFieldCyclicSecp256k1 {
             value: Integer::from_str_radix(input, 16).expect("Cannot parse from string")
                 + Complex::new(COMPLEX_PREC),
         }
+    }
+
+    pub fn mat_mul<T>(&self, x: T) -> Self
+    where
+        T: Into<Integer>,
+    {
+        let int: Integer = x.into();
+        let ident = FiniteFieldCyclicSecp256k1::identity();
+        let this = FiniteFieldCyclicSecp256k1 {
+            value: int + Complex::new(COMPLEX_PREC),
+        };
+        FiniteFieldCyclicSecp256k1::from(this * ident)
+    }
+
+    pub fn pow<T>(&self, x: T) -> Self
+    where
+        T: Into<Integer>,
+    {
+        let int: Integer = x.into();
+        let ident = FiniteFieldCyclicSecp256k1::identity();
+        let this = FiniteFieldCyclicSecp256k1 {
+            value: int + Complex::new(COMPLEX_PREC),
+        };
+        FiniteFieldCyclicSecp256k1::from(this * ident)
     }
 }
 
@@ -72,6 +120,30 @@ impl FiniteFieldSecp256r1 {
                 + Complex::new(COMPLEX_PREC),
         }
     }
+
+    pub fn mat_mul<T>(&self, x: T) -> Self
+    where
+        T: Into<Integer>,
+    {
+        let int: Integer = x.into();
+        let ident = FiniteFieldSecp256r1::identity();
+        let this = FiniteFieldSecp256r1 {
+            value: int + Complex::new(COMPLEX_PREC),
+        };
+        FiniteFieldSecp256r1::from(this * ident)
+    }
+
+    pub fn pow<T>(&self, x: T) -> Self
+    where
+        T: Into<Integer>,
+    {
+        let int: Integer = x.into();
+        let ident = FiniteFieldSecp256r1::identity();
+        let this = FiniteFieldSecp256r1 {
+            value: int + Complex::new(COMPLEX_PREC),
+        };
+        FiniteFieldSecp256r1::from(this * ident)
+    }
 }
 
 impl FiniteFieldCyclicSecp256r1 {
@@ -80,6 +152,30 @@ impl FiniteFieldCyclicSecp256r1 {
             value: Integer::from_str_radix(input, 16).expect("Cannot parse from string")
                 + Complex::new(COMPLEX_PREC),
         }
+    }
+
+    pub fn mat_mul<T>(&self, x: T) -> Self
+    where
+        T: Into<Integer>,
+    {
+        let int: Integer = x.into();
+        let ident = FiniteFieldCyclicSecp256r1::identity();
+        let this = FiniteFieldCyclicSecp256r1 {
+            value: int + Complex::new(COMPLEX_PREC),
+        };
+        FiniteFieldCyclicSecp256r1::from(this * ident)
+    }
+
+    pub fn pow<T>(&self, x: T) -> Self
+    where
+        T: Into<Integer>,
+    {
+        let int: Integer = x.into();
+        let ident = FiniteFieldCyclicSecp256r1::identity();
+        let this = FiniteFieldCyclicSecp256r1 {
+            value: int + Complex::new(COMPLEX_PREC),
+        };
+        FiniteFieldCyclicSecp256r1::from(this * ident)
     }
 }
 
@@ -296,7 +392,7 @@ macro_rules! field_trait_implement {
 pub(crate) mod cast_to_field {
     use super::{
         Complex, Field, FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1,
-        FiniteFieldSecp256k1, FiniteFieldSecp256r1, InCompleteField,
+        FiniteFieldSecp256k1, FiniteFieldSecp256r1, InCompleteField, Integer,
     };
     use crate::types::algebra::traits::Identity;
     use std::any::{Any, TypeId};
@@ -372,6 +468,52 @@ pub(crate) mod cast_to_field {
                 RegisterField::V2(f) => f.value.clone(),
                 RegisterField::V3(f) => f.value.clone(),
                 RegisterField::V4(f) => f.value.clone(),
+            }
+        }
+
+        pub fn mat_mul<T>(&self, x: T) -> Self
+        where
+            T: Into<Integer>,
+        {
+            match self {
+                RegisterField::V1(field) => RegisterField::V1(field.mat_mul(x)),
+                RegisterField::V2(field) => RegisterField::V2(field.mat_mul(x)),
+                RegisterField::V3(field) => RegisterField::V3(field.mat_mul(x)),
+                RegisterField::V4(field) => RegisterField::V4(field.mat_mul(x)),
+            }
+        }
+
+        pub fn pow<T>(&self, x: T) -> Self
+        where
+            T: Into<Integer>,
+        {
+            match self {
+                RegisterField::V1(field) => RegisterField::V1(field.pow(x)),
+                RegisterField::V2(field) => RegisterField::V2(field.pow(x)),
+                RegisterField::V3(field) => RegisterField::V3(field.pow(x)),
+                RegisterField::V4(field) => RegisterField::V4(field.pow(x)),
+            }
+        }
+
+        pub fn from_incomplete(item: InCompleteField<Complex>, version: Option<i8>) -> Self {
+            let version = version.unwrap_or(1);
+            if version == 1 {
+                RegisterField::V1(FiniteFieldSecp256k1::from(item))
+            } else if version == 2 {
+                RegisterField::V2(FiniteFieldSecp256r1::from(item))
+            } else if version == 3 {
+                RegisterField::V3(FiniteFieldCyclicSecp256k1::from(item))
+            } else {
+                RegisterField::V4(FiniteFieldCyclicSecp256r1::from(item))
+            }
+        }
+
+        pub fn version(&self) -> i8 {
+            match self {
+                RegisterField::V1(_) => 1,
+                RegisterField::V2(_) => 2,
+                RegisterField::V3(_) => 3,
+                RegisterField::V4(_) => 4,
             }
         }
 
