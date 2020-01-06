@@ -3,8 +3,8 @@ use crate::constrant::{
     SECP256K1_P, SECP256R1_A, SECP256R1_B, SECP256R1_GX, SECP256R1_GY, SECP256R1_N, SECP256R1_P,
 };
 use crate::types::algebra::field::{
-    FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
-    FiniteFieldSecp256r1, InCompleteField,
+    cast_to_field::RegisterField, FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1,
+    FiniteFieldSecp256k1, FiniteFieldSecp256r1, InCompleteField,
 };
 use crate::types::algebra::traits::{
     ConstA, ConstB, ConstN, ConstP, Field, Group, Identity, SecGroup, SecIdentity,
@@ -12,6 +12,7 @@ use crate::types::algebra::traits::{
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
 use std::marker::PhantomData;
+use std::ops::Neg;
 
 lazy_static! {
     static ref SECP256k1X: FiniteFieldSecp256k1 = FiniteFieldSecp256k1::new(SECP256K1_GX);
@@ -321,6 +322,7 @@ pub(crate) mod cast_to_group {
         }
     }
 }
+use cast_to_group::RegisterGroup;
 
 fn choose_field_from_version(v: Complex, version: i8) -> Box<dyn Field> {
     if version == 1 {
@@ -344,20 +346,24 @@ macro_rules! elliptic_curve_group {
 
         impl Group for $structName {
             fn inverse(&self) -> Self {
+                let x = RegisterField::from_field_boxed(&self.y);
+                let y = RegisterField::from_field_boxed(&self.y);
+                let versionx = x.version();
+                let versiony = y.version();
                 $structName {
-                    x: self.x.clone(),
-                    y: -self.y.clone(),
+                    x: choose_field_from_version(x.into_inner(), versionx),
+                    y: choose_field_from_version(y.into_inner().neg(), versiony),
                 }
             }
 
             fn op(&self, g: &dyn Any) -> Self {
                 let group = RegisterGroup::from_any(g);
-                let x1 = RegisterField::from_field_boxed(self.x);
-                let y1 = RegisterField::from_field_boxed(self.y);
+                let x1 = RegisterField::from_field_boxed(&self.x);
+                let y1 = RegisterField::from_field_boxed(&self.y);
                 let (x2, y2) = {
                     let (t1, t2) = group.into_field();
                     (t1.into_inner(), t2.into_inner())
-                }
+                };
 
                 let versionx = x1.version();
                 let versiony = y1.version();
@@ -372,19 +378,20 @@ macro_rules! elliptic_curve_group {
                         return $structName::identity();
                     }
                     let A = Integer::from_str_radix($structName::A, 16)
-                        .expect("Parse ConstA Failed") + Complex::new(COMPLEX_PREC);
+                        .expect("Parse ConstA Failed")
+                        + Complex::new(COMPLEX_PREC);
                     (Complex::with_val(COMPLEX_PREC, (3, 0)) * x1.clone() * x1.clone() + A)
                         / (Complex::with_val(COMPLEX_PREC, (2, 0)) * y1.clone())
                 };
 
                 let rx = (m.clone() * m.clone() - x1.clone() - y1.clone());
-                let ry = (y1 + m.clone() (rx.clone() - x1.clone()));
+                let ry = (y1 + m.clone() * (rx.clone() - x1.clone()));
 
                 let rx_boxed = choose_field_from_version(rx, versionx);
                 let ry_boxed = choose_field_from_version(ry, versiony);
                 $structName {
                     x: rx_boxed,
-                    y: ry_boxed
+                    y: ry_boxed,
                 }
             }
         }
@@ -463,11 +470,13 @@ macro_rules! cyclic_add_group {
 
 macro_rules! jacobian_group {
     ($structName: ident) => {
-        impl Group for $structName {
-            fn inverse(&self) -> Self {
-                unreachable!();
+        impl Identity for $structName {
+            fn identity() -> Self {
+                $structName::default()
             }
+        }
 
+        impl $structName {
             fn double(&self, n: &dyn Any) -> Self {
                 let group = RegisterGroup::from_any(n);
                 let (x, y, z) = match group {
@@ -484,41 +493,18 @@ macro_rules! jacobian_group {
                     _ => unreachable!(),
                 };
                 let version = x.version();
-                let sx = RegisterField::from_field_boxed(self.x);
-                let sy = RegisterField::from_field_boxed(self.y);
-                let sz = RegisterField::from_field_boxed(self.z);
+                let sx = RegisterField::from_field_boxed(&self.x).into_inner();
+                let sy = RegisterField::from_field_boxed(&self.y).into_inner();
+                let sz = RegisterField::from_field_boxed(&self.z).into_inner();
 
-                let ysq = sy.pow(2);
-                let s: RegisterField =
-                    RegisterField::from_incomplete(sx.mat_mul(4) * ysq.clone(), version);
-                let a: Integer =
-                    Integer::from_str_radix($structName::A, 16).expect("Parse from String Failed");
-                let m: RegisterField = RegisterField::from_incomplete(
-                    sx.pow(2).mat_mul(3) + sz.pow(4).mat_mul(a),
-                    version,
-                );
-
-                let nx = RegisterField::from_incomplete(m.pow(2) - s.clone(), version).into_inner();
-                let ny = RegisterField::from_incomplete(
-                    RegisterField::from_incomplete(
-                        m * RegisterField::from_incomplete(s - nx.clone(), version),
-                        version,
-                    ) - ysq.pow(2).mat_mul(8),
-                    version,
-                )
-                .into_inner();
-                let nz = RegisterField::from_incomplete(
-                    InCompleteField {
-                        value: Complex::new(COMPLEX_PREC) + Integer::from(2),
-                    },
-                    version,
-                );
-                let nz = RegisterField::from_incomplete(
-                    nz * RegisterField::from_incomplete(sy * sz, version),
-                    version,
-                )
-                .into_inner();
-
+                let ysq: Complex = y.into_inner() * 2;
+                let s: Complex = sx.clone() * 4 * ysq.clone();
+                let A =
+                    Integer::from_str_radix($structName::A, 16).expect("Parse from string failed");
+                let m: Complex = (sx.clone() * 2) * 3 + (sz.clone() * 4) * A.clone();
+                let nx: Complex = m.clone() * 2 - s.clone() * 2;
+                let ny: Complex = m.clone() * (s.clone() - nx.clone()) - (ysq.clone() * 2) * 8;
+                let nz: Complex = Integer::from(2) * sy * sz;
                 $structName {
                     x: choose_field_from_version(nx, version),
                     y: choose_field_from_version(ny, version),
@@ -526,5 +512,121 @@ macro_rules! jacobian_group {
                 }
             }
         }
+
+        impl Group for $structName {
+            fn inverse(&self) -> Self {
+                unreachable!();
+            }
+
+            fn op(&self, g: &dyn Any) -> Self {
+                let group = RegisterGroup::from_any(g);
+                let (x, y, z) = match group {
+                    RegisterGroup::V5(group) => (
+                        RegisterField::from_field_boxed(&group.x),
+                        RegisterField::from_field_boxed(&group.y),
+                        RegisterField::from_field_boxed(&group.z),
+                    ),
+                    RegisterGroup::V6(group) => (
+                        RegisterField::from_field_boxed(&group.x),
+                        RegisterField::from_field_boxed(&group.y),
+                        RegisterField::from_field_boxed(&group.z),
+                    ),
+                    _ => unreachable!(),
+                };
+
+                let sx = RegisterField::from_field_boxed(&self.x);
+                let sy = RegisterField::from_field_boxed(&self.x);
+                let sz = RegisterField::from_field_boxed(&self.x);
+                let version = sx.version();
+
+                let sx = sx.into_inner();
+                let sy = sy.into_inner();
+                let sz = sz.into_inner();
+
+                let gx = x.into_inner();
+                let gy = y.into_inner();
+                let gz = z.into_inner();
+
+                let u1: Complex = sx.clone() * (gz.clone() * 2);
+                let u2: Complex = gx.clone() * (sz.clone() * 2);
+                let s1: Complex = sy.clone() * (gz.clone() * 3);
+                let s2: Complex = gy.clone() * (sz.clone() * 3);
+
+                if u1 == u2 && s1 != s2 {
+                    return $structName {
+                        x: choose_field_from_version(
+                            Complex::new(COMPLEX_PREC) + Integer::from(0),
+                            version,
+                        ),
+                        y: choose_field_from_version(
+                            Complex::new(COMPLEX_PREC) + Integer::from(0),
+                            version,
+                        ),
+                        z: choose_field_from_version(
+                            Complex::new(COMPLEX_PREC) + Integer::from(1),
+                            version,
+                        ),
+                    };
+                }
+
+                let h: Complex = u2.clone() - u1.clone();
+                let h2: Complex = h.clone() * 2;
+                let h3 = h2.clone() * h.clone();
+                let r = s2.clone() - s1.clone();
+                let u1h2 = u1.clone() * h2.clone();
+                let nx: Complex = (r.clone() * 2) - h3.clone() - (u1h2.clone() * 2);
+                let ny: Complex = r.clone() * (u1h2.clone() - nx.clone()) - s1.clone() * h3.clone();
+                let nz = h * sz * gz;
+                $structName {
+                    x: choose_field_from_version(nx, version),
+                    y: choose_field_from_version(ny, version),
+                    z: choose_field_from_version(nz, version),
+                }
+            }
+
+            //let ysq = sy.pow(2);
+            //let s: RegisterField =
+            //RegisterField::from_incomplete(sx.mat_mul(4) * ysq.clone(), version);
+            //let a: Integer =
+            //Integer::from_str_radix($structName::A, 16).expect("Parse from String Failed");
+            //let m: RegisterField = RegisterField::from_incomplete(
+            //sx.pow(2).mat_mul(3) + sz.pow(4).mat_mul(a),
+            //version,
+            //);
+
+            //let nx = RegisterField::from_incomplete(m.pow(2) - s.clone(), version).into_inner();
+            //let ny = RegisterField::from_incomplete(
+            //RegisterField::from_incomplete(
+            //m * RegisterField::from_incomplete(s - nx.clone(), version),
+            //version,
+            //) - ysq.pow(2).mat_mul(8),
+            //version,
+            //)
+            //.into_inner();
+            //let nz = RegisterField::from_incomplete(
+            //InCompleteField {
+            //value: Complex::new(COMPLEX_PREC) + Integer::from(2),
+            //},
+            //version,
+            //);
+            //let nz = RegisterField::from_incomplete(
+            //nz * RegisterField::from_incomplete(sy * sz, version),
+            //version,
+            //)
+            //.into_inner();
+
+            //$structName {
+            //x: choose_field_from_version(nx, version),
+            //y: choose_field_from_version(ny, version),
+            //z: choose_field_from_version(nz, version),
+            //}
+        }
     };
 }
+
+jacobian_group!(JacobianGroupSecp256k1);
+jacobian_group!(JacobianGroupSecp256r1);
+elliptic_curve_group!(EllipticCurveGroupSecp256k1);
+elliptic_curve_group!(EllipticCurveGroupSecp256r1);
+elliptic_curve_group!(EllipticCurveCyclicSubgroupSecp256k1);
+elliptic_curve_group!(EllipticCurveCyclicSubgroupSecp256r1);
