@@ -1,4 +1,5 @@
 #![feature(trait_alias)]
+use rug::Integer;
 use std::any::{Any, TypeId};
 use std::cmp::PartialEq;
 use std::fmt::Debug;
@@ -102,6 +103,14 @@ impl Add for FiniteField {
     }
 }
 
+fn from_primitive<T>(x: T)
+where
+    T: Into<Integer>,
+{
+    let t: Integer = x.into();
+    println!("{:?}", t);
+}
+
 fn from_any(x: &dyn Any) {
     println!("{:?}", x.type_id() == TypeId::of::<Group>());
 }
@@ -118,13 +127,5 @@ fn main() {
         y: &FiniteField { value: 2 },
     };
 
-    from_any2(g.x);
-    //let c: Box<dyn Field> = Box::new(FiniteField { value: 3 });
-    //let raw = Box::into_raw(c);
-    //unsafe {
-    //println!("{:?}", raw.type_id());
-    //println!("{:?}", TypeId::of::<FiniteField>());
-    //}
-    //println!("{:?}", TypeId::of::<Group>());
-    //println!("{:?}", TypeId::of::<SecGroup>());
+    from_primitive(2);
 }
