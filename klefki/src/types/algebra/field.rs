@@ -11,6 +11,12 @@ pub struct InCompleteField<T> {
     value: T,
 }
 
+impl<T> InCompleteField<T> {
+    pub fn new(x: T) -> Self {
+        InCompleteField { value: x }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct FiniteFieldSecp256k1 {
     pub value: Complex,
