@@ -12,7 +12,7 @@ use crate::types::algebra::traits::{
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
 use std::marker::PhantomData;
-use std::ops::Neg;
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
 lazy_static! {
     static ref SECP256k1X: FiniteFieldSecp256k1 = FiniteFieldSecp256k1::new(SECP256K1_GX);
@@ -223,11 +223,29 @@ impl EllipticCurveGroupSecp256k1 {
     }
 }
 
-impl EllipticCurveGroupSecp256r1 {
-    fn G_p() -> EllipticCurveGroupSecp256r1 {
-        EllipticCurveGroupSecp256r1 {
+impl EllipticCurveCyclicSubgroupSecp256k1 {
+    fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1 {
+        EllipticCurveCyclicSubgroupSecp256k1 {
             x: Box::new(SECP256k1X.clone()),
             y: Box::new(SECP256k1Y.clone()),
+        }
+    }
+}
+
+impl EllipticCurveGroupSecp256r1 {
+    fn G_p() -> EllipticCurveCyclicSubgroupSecp256r1 {
+        EllipticCurveCyclicSubgroupSecp256r1 {
+            x: Box::new(SECP256r1X.clone()),
+            y: Box::new(SECP256r1Y.clone()),
+        }
+    }
+}
+
+impl EllipticCurveCyclicSubgroupSecp256r1 {
+    fn G_p() -> EllipticCurveCyclicSubgroupSecp256r1 {
+        EllipticCurveCyclicSubgroupSecp256r1 {
+            x: Box::new(SECP256r1X.clone()),
+            y: Box::new(SECP256r1Y.clone()),
         }
     }
 }
@@ -344,15 +362,22 @@ macro_rules! elliptic_curve_group {
             }
         }
 
+        impl PartialEq for $structName {
+            fn eq(&self, other: &Self) -> bool {
+                self.x.value() == other.x.value() && self.y.value() == other.y.value()
+            }
+        }
+
         impl Group for $structName {
             fn inverse(&self) -> Self {
-                let x = RegisterField::from_field_boxed(&self.y);
+                let x = RegisterField::from_field_boxed(&self.x);
                 let y = RegisterField::from_field_boxed(&self.y);
                 let versionx = x.version();
                 let versiony = y.version();
+                let y = RegisterField::from_incomplete(-y, Some(versiony));
                 $structName {
                     x: choose_field_from_version(x.into_inner(), versionx),
-                    y: choose_field_from_version(y.into_inner().neg(), versiony),
+                    y: choose_field_from_version(y.into_inner(), versiony),
                 }
             }
 
@@ -360,39 +385,92 @@ macro_rules! elliptic_curve_group {
                 let group = RegisterGroup::from_any(g);
                 let x1 = RegisterField::from_field_boxed(&self.x);
                 let y1 = RegisterField::from_field_boxed(&self.y);
-                let (x2, y2) = {
-                    let (t1, t2) = group.into_field();
-                    (t1.into_inner(), t2.into_inner())
-                };
+                let (x2, y2) = group.into_field();
 
                 let versionx = x1.version();
                 let versiony = y1.version();
-                let x1 = x1.into_inner();
-                let y1 = y1.into_inner();
 
                 // Next do the calculate
-                let m = if x1 != x2 {
-                    (y1.clone() - y2.clone()) / (x1.clone() - x2.clone())
+                let m: InCompleteField<Complex> = if x1 != x2 {
+                    RegisterField::from_incomplete(y1.clone() - y2.clone(), Some(versiony))
+                        / RegisterField::from_incomplete(x1.clone() - x2.clone(), Some(versionx))
                 } else {
-                    if y1 == -y2 {
+                    if y1 == RegisterField::from_incomplete(-y2, Some(versiony)) {
                         return $structName::identity();
                     }
                     let A = Integer::from_str_radix($structName::A, 16)
                         .expect("Parse ConstA Failed")
                         + Complex::new(COMPLEX_PREC);
-                    (Complex::with_val(COMPLEX_PREC, (3, 0)) * x1.clone() * x1.clone() + A)
-                        / (Complex::with_val(COMPLEX_PREC, (2, 0)) * y1.clone())
+                    let field3 = choose_field_from_version(
+                        Complex::with_val(COMPLEX_PREC, (3, 0)),
+                        versionx,
+                    );
+                    let field2 = choose_field_from_version(
+                        Complex::with_val(COMPLEX_PREC, (2, 0)),
+                        versionx,
+                    );
+                    let A = choose_field_from_version(A, versionx);
+
+                    let field3 = RegisterField::from_field_boxed(&field3);
+                    let field2 = RegisterField::from_field_boxed(&field2);
+                    let A = RegisterField::from_field_boxed(&A);
+
+                    let v1 = RegisterField::from_incomplete(field3 * x1.clone(), Some(versionx));
+                    let v2 = RegisterField::from_incomplete(v1 * x1.clone(), Some(versionx));
+                    let v3 = RegisterField::from_incomplete(v2 + A, Some(versionx));
+                    let v4 = RegisterField::from_incomplete(field2 * y1.clone(), Some(versionx));
+                    v3 / v4
                 };
 
-                let rx = (m.clone() * m.clone() - x1.clone() - y1.clone());
-                let ry = (y1 + m.clone() * (rx.clone() - x1.clone()));
-
-                let rx_boxed = choose_field_from_version(rx, versionx);
-                let ry_boxed = choose_field_from_version(ry, versiony);
+                let m = RegisterField::from_incomplete(m, Some(versionx));
+                let rx: RegisterField = {
+                    let v1 = RegisterField::from_incomplete(m.clone() * m.clone(), Some(versionx));
+                    let v2 = RegisterField::from_incomplete(v1 - x1.clone(), Some(versionx));
+                    let v3 = RegisterField::from_incomplete(v2 - x2.clone(), Some(versionx));
+                    v3
+                };
+                let ry: RegisterField = {
+                    let v1 =
+                        RegisterField::from_incomplete(rx.clone() - x1.clone(), Some(versionx));
+                    let v2 = RegisterField::from_incomplete(m.clone() * v1, Some(versionx));
+                    let v3 = RegisterField::from_incomplete(y1.clone() + v2, Some(versionx));
+                    v3
+                };
+                let ry = RegisterField::from_incomplete(-ry, Some(versionx));
+                let rx_boxed = choose_field_from_version(rx.into_inner(), versionx);
+                let ry_boxed = choose_field_from_version(ry.into_inner(), versiony);
                 $structName {
                     x: rx_boxed,
                     y: ry_boxed,
                 }
+            }
+        }
+
+        impl Add for $structName {
+            type Output = Self;
+            fn add(self, other: Self) -> Self::Output {
+                self.op(&other)
+            }
+        }
+
+        impl Mul for $structName {
+            type Output = Self;
+            fn mul(self, other: Self) -> Self::Output {
+                self + other
+            }
+        }
+
+        impl Sub for $structName {
+            type Output = Self;
+            fn sub(self, other: Self) -> Self::Output {
+                self.op(&other.inverse())
+            }
+        }
+
+        impl Neg for $structName {
+            type Output = Self;
+            fn neg(self) -> Self::Output {
+                self.inverse()
             }
         }
     };
@@ -473,6 +551,14 @@ macro_rules! jacobian_group {
         impl Identity for $structName {
             fn identity() -> Self {
                 $structName::default()
+            }
+        }
+
+        impl PartialEq for $structName {
+            fn eq(&self, other: &Self) -> bool {
+                self.x.value() == other.x.value()
+                    && self.y.value() == other.y.value()
+                    && self.z.value() == other.z.value()
             }
         }
 
@@ -621,6 +707,20 @@ macro_rules! jacobian_group {
             //z: choose_field_from_version(nz, version),
             //}
         }
+
+        impl Add for $structName {
+            type Output = Self;
+            fn add(self, other: Self) -> Self::Output {
+                self.op(&other)
+            }
+        }
+
+        impl Mul for $structName {
+            type Output = Self;
+            fn mul(self, other: Self) -> Self::Output {
+                self + other
+            }
+        }
     };
 }
 
@@ -630,3 +730,23 @@ elliptic_curve_group!(EllipticCurveGroupSecp256k1);
 elliptic_curve_group!(EllipticCurveGroupSecp256r1);
 elliptic_curve_group!(EllipticCurveCyclicSubgroupSecp256k1);
 elliptic_curve_group!(EllipticCurveCyclicSubgroupSecp256r1);
+
+#[cfg(test)]
+mod test {
+    use super::EllipticCurveCyclicSubgroupSecp256k1 as CG;
+    use super::{SECP256k1X, COMPLEX_PREC, SECP256K1_GX, SECP256K1_GY};
+    use crate::types::algebra::field::{
+        FiniteFieldCyclicSecp256k1 as CF, FiniteFieldSecp256k1 as CF2,
+    };
+    use crate::types::algebra::traits::Field;
+    use crate::types::algebra::traits::Group;
+    use rug::{Complex, Integer};
+
+    #[test]
+    fn test_add() {
+        let g = CG::G_p();
+        let minus_g = g.clone() - g.clone();
+        assert_eq!(minus_g.x.value(), Complex::with_val(COMPLEX_PREC, (0, 0)));
+        assert_eq!(minus_g.y.value(), Complex::with_val(COMPLEX_PREC, (0, 0)));
+    }
+}

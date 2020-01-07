@@ -236,6 +236,33 @@ macro_rules! field_trait_implement {
                     unreachable!();
                 }
             }
+
+            #[inline]
+            fn true_div(&self) -> InCompleteField<Complex> {
+                let base1 = Integer::from(1) + Complex::new(COMPLEX_PREC);
+                let temp = self.value.clone();
+                let (ref a, ref b) = base1.into_real_imag();
+                let (ref c, ref d) = temp.into_real_imag();
+                let real = (Float::with_val(COMPLEX_PREC, a * c)
+                    + Float::with_val(COMPLEX_PREC, b * d))
+                    / (Float::with_val(COMPLEX_PREC, c.pow(2))
+                        + Float::with_val(COMPLEX_PREC, d.pow(2)));
+                let imag = (Float::with_val(COMPLEX_PREC, b * c)
+                    - Float::with_val(COMPLEX_PREC, a * d))
+                    / (Float::with_val(COMPLEX_PREC, c.pow(2))
+                        + Float::with_val(COMPLEX_PREC, d.pow(2)));
+                InCompleteField {
+                    value: Complex::with_val(COMPLEX_PREC, (real, imag)),
+                }
+            }
+
+            #[inline]
+            fn type_name<T>(_: &T) -> String {
+                let name = std::any::type_name::<T>()
+                    .split("::")
+                    .collect::<Vec<&str>>();
+                format!("{}", name[name.len() - 1])
+            }
         }
 
         impl Identity for $structName {
@@ -288,20 +315,10 @@ macro_rules! field_trait_implement {
 
             #[inline]
             fn sec_inverse(&self) -> InCompleteField<Complex> {
-                let base1 = Integer::from(1) + Complex::new(COMPLEX_PREC);
-                let temp = self.value.clone();
-                let (ref a, ref b) = base1.into_real_imag();
-                let (ref c, ref d) = temp.into_real_imag();
-                let real = (Float::with_val(COMPLEX_PREC, a * c)
-                    + Float::with_val(COMPLEX_PREC, b * d))
-                    / (Float::with_val(COMPLEX_PREC, c.pow(2))
-                        + Float::with_val(COMPLEX_PREC, d.pow(2)));
-                let imag = (Float::with_val(COMPLEX_PREC, b * c)
-                    - Float::with_val(COMPLEX_PREC, a * d))
-                    / (Float::with_val(COMPLEX_PREC, c.pow(2))
-                        + Float::with_val(COMPLEX_PREC, d.pow(2)));
-                InCompleteField {
-                    value: Complex::with_val(COMPLEX_PREC, (real, imag)),
+                if $structName::type_name(&self.value) == String::from("Complex") {
+                    self.true_div()
+                } else {
+                    unreachable!();
                 }
             }
 
@@ -396,7 +413,7 @@ pub(crate) mod cast_to_field {
     };
     use crate::types::algebra::traits::Identity;
     use std::any::{Any, TypeId};
-    use std::ops::{Add, Div, Mul, Sub};
+    use std::ops::{Add, Div, Mul, Neg, Sub};
 
     macro_rules! from_incomplete_to_field {
         ($structName: ident) => {
@@ -432,32 +449,88 @@ pub(crate) mod cast_to_field {
     impl Add for RegisterField {
         type Output = InCompleteField<Complex>;
         fn add(self, other: Self) -> Self::Output {
-            let v = self.into_inner() + other.into_inner();
-            InCompleteField { value: v }
+            let v: Complex = match other {
+                RegisterField::V1(f) => f.value(),
+                RegisterField::V2(f) => f.value(),
+                RegisterField::V3(f) => f.value(),
+                RegisterField::V4(f) => f.value(),
+            };
+            match self {
+                RegisterField::V1(f) => f.op(&v),
+                RegisterField::V2(f) => f.op(&v),
+                RegisterField::V3(f) => f.op(&v),
+                RegisterField::V4(f) => f.op(&v),
+            }
         }
     }
 
     impl Div for RegisterField {
         type Output = InCompleteField<Complex>;
         fn div(self, other: Self) -> Self::Output {
-            let v = self.into_inner() / other.into_inner();
-            InCompleteField { value: v }
+            let signed = match other {
+                RegisterField::V1(f) => {
+                    FiniteFieldSecp256k1::type_name(&f.value) == String::from("Complex")
+                }
+                RegisterField::V2(f) => {
+                    FiniteFieldSecp256r1::type_name(&f.value) == String::from("Complex")
+                }
+                RegisterField::V3(f) => {
+                    FiniteFieldCyclicSecp256k1::type_name(&f.value) == String::from("Complex")
+                }
+                RegisterField::V4(f) => {
+                    FiniteFieldCyclicSecp256r1::type_name(&f.value) == String::from("Complex")
+                }
+            };
+            if signed {
+                match self {
+                    RegisterField::V1(f) => f.true_div(),
+                    RegisterField::V2(f) => f.true_div(),
+                    RegisterField::V3(f) => f.true_div(),
+                    RegisterField::V4(f) => f.true_div(),
+                }
+            } else {
+                unreachable!();
+            }
         }
     }
 
     impl Sub for RegisterField {
         type Output = InCompleteField<Complex>;
         fn sub(self, other: Self) -> Self::Output {
-            let v = self.into_inner() - other.into_inner();
-            InCompleteField { value: v }
+            let version = other.version();
+            let inverse = match other {
+                RegisterField::V1(f) => f.inverse(),
+                RegisterField::V2(f) => f.inverse(),
+                RegisterField::V3(f) => f.inverse(),
+                RegisterField::V4(f) => f.inverse(),
+            };
+            let inverse: Complex =
+                RegisterField::from_incomplete(inverse, Some(version)).into_inner();
+            match self {
+                RegisterField::V1(f) => f.op(&inverse),
+                RegisterField::V2(f) => f.op(&inverse),
+                RegisterField::V3(f) => f.op(&inverse),
+                RegisterField::V4(f) => f.op(&inverse),
+            }
         }
     }
 
     impl Mul for RegisterField {
         type Output = InCompleteField<Complex>;
         fn mul(self, other: Self) -> Self::Output {
-            let v = self.into_inner() * other.into_inner();
-            InCompleteField { value: v }
+            self.add(other)
+        }
+    }
+
+    impl Neg for RegisterField {
+        type Output = InCompleteField<Complex>;
+        fn neg(self) -> Self::Output {
+            match self {
+                RegisterField::V1(field) => field.inverse(),
+                RegisterField::V2(field) => field.inverse(),
+                RegisterField::V3(field) => field.inverse(),
+                RegisterField::V4(field) => field.inverse(),
+            }
         }
     }
 
