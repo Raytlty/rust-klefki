@@ -22,6 +22,18 @@ lazy_static! {
     static ref SECP256r1Y: FiniteFieldSecp256r1 = FiniteFieldSecp256r1::new(SECP256R1_GY);
 }
 
+macro_rules! from_incomplete {
+    ($Param: expr, $Version: expr) => {
+        RegisterField::from_incomplete($Param, Some($Version))
+    }
+}
+
+macro_rules! from_field_boxed {
+    ($Param: expr) => {
+        RegisterField::from_field_boxed($Param)
+    }
+}
+
 #[derive(Clone)]
 pub struct EllipticCurveCyclicSubgroupSecp256k1 {
     pub x: Box<dyn Field>,
@@ -200,11 +212,11 @@ macro_rules! elliptic_curve_group {
 
         impl Group for $Struct {
             fn inverse(&self) -> Self {
-                let x = RegisterField::from_field_boxed(&self.x);
-                let y = RegisterField::from_field_boxed(&self.y);
+                let x = from_field_boxed!(&self.x);
+                let y = from_field_boxed!(&self.y);
                 let versionx = x.version();
                 let versiony = y.version();
-                let y = RegisterField::from_incomplete(-y, Some(versiony));
+                let y = from_incomplete!(-y, versiony);
                 $Struct {
                     x: choose_field_from_version(x.into_inner(), versionx),
                     y: choose_field_from_version(y.into_inner(), versiony),
@@ -213,8 +225,8 @@ macro_rules! elliptic_curve_group {
 
             fn op(&self, g: &dyn Any) -> Self {
                 let group = RegisterGroup::from_any(g);
-                let x1 = RegisterField::from_field_boxed(&self.x);
-                let y1 = RegisterField::from_field_boxed(&self.y);
+                let x1 = from_field_boxed!(&self.x);
+                let y1 = from_field_boxed!(&self.y);
                 let (x2, y2) = group.into_field();
 
                 let versionx = x1.version();
@@ -222,10 +234,10 @@ macro_rules! elliptic_curve_group {
 
                 // Next do the calculate
                 let m: InCompleteField<Complex> = if x1 != x2 {
-                    RegisterField::from_incomplete(y1.clone() - y2.clone(), Some(versiony))
-                        / RegisterField::from_incomplete(x1.clone() - x2.clone(), Some(versionx))
+                    from_incomplete!(y1.clone() - y2.clone(), versiony)
+                        / from_incomplete!(x1.clone() - x2.clone(), versionx)
                 } else {
-                    if y1 == RegisterField::from_incomplete(-y2, Some(versiony)) {
+                    if y1 == from_incomplete!(-y2, versiony) {
                         return $Struct::identity();
                     }
                     let A = Integer::from_str_radix($Struct::A, 16).expect("Parse ConstA Failed")
@@ -240,32 +252,32 @@ macro_rules! elliptic_curve_group {
                     );
                     let A = choose_field_from_version(A, versionx);
 
-                    let field3 = RegisterField::from_field_boxed(&field3);
-                    let field2 = RegisterField::from_field_boxed(&field2);
-                    let A = RegisterField::from_field_boxed(&A);
+                    let field3 = from_field_boxed!(&field3);
+                    let field2 = from_field_boxed!(&field2);
+                    let A = from_field_boxed!(&A);
 
-                    let v1 = RegisterField::from_incomplete(field3 * x1.clone(), Some(versionx));
-                    let v2 = RegisterField::from_incomplete(v1 * x1.clone(), Some(versionx));
-                    let v3 = RegisterField::from_incomplete(v2 + A, Some(versionx));
-                    let v4 = RegisterField::from_incomplete(field2 * y1.clone(), Some(versionx));
+                    let v1 = from_incomplete!(field3 * x1.clone(), versionx);
+                    let v2 = from_incomplete!(v1 * x1.clone(), versionx);
+                    let v3 = from_incomplete!(v2 + A, versionx);
+                    let v4 = from_incomplete!(field2 * y1.clone(), versionx);
                     v3 / v4
                 };
 
-                let m = RegisterField::from_incomplete(m, Some(versionx));
+                let m = from_incomplete!(m, versionx);
                 let rx: RegisterField = {
-                    let v1 = RegisterField::from_incomplete(m.clone() * m.clone(), Some(versionx));
-                    let v2 = RegisterField::from_incomplete(v1 - x1.clone(), Some(versionx));
-                    let v3 = RegisterField::from_incomplete(v2 - x2.clone(), Some(versionx));
+                    let v1 = from_incomplete!(m.clone() * m.clone(), versionx);
+                    let v2 = from_incomplete!(v1 - x1.clone(), versionx);
+                    let v3 = from_incomplete!(v2 - x2.clone(), versionx);
                     v3
                 };
                 let ry: RegisterField = {
                     let v1 =
-                        RegisterField::from_incomplete(rx.clone() - x1.clone(), Some(versionx));
-                    let v2 = RegisterField::from_incomplete(m.clone() * v1, Some(versionx));
-                    let v3 = RegisterField::from_incomplete(y1.clone() + v2, Some(versionx));
+                        from_incomplete!(rx.clone() - x1.clone(), versionx);
+                    let v2 = from_incomplete!(m.clone() * v1, versionx);
+                    let v3 = from_incomplete!(y1.clone() + v2, versionx);
                     v3
                 };
-                let ry = RegisterField::from_incomplete(-ry, Some(versionx));
+                let ry = from_incomplete!(-ry, versionx);
                 let rx_boxed = choose_field_from_version(rx.into_inner(), versionx);
                 let ry_boxed = choose_field_from_version(ry.into_inner(), versiony);
                 $Struct {
@@ -299,7 +311,7 @@ macro_rules! cyclic_add_group {
                         .expect("Cannot parse from string")
                     + Complex::new(COMPLEX_PREC);
 
-                let rf: RegisterField = RegisterField::from_field_boxed(self.x);
+                let rf: RegisterField = from_field_boxed!(self.x);
                 let version = rf.version();
                 let b: Complex = rf.into_inner();
 
@@ -396,33 +408,33 @@ macro_rules! jacobian_group {
                 let group = RegisterGroup::from_any(n);
                 let (x, y, z) = group.into_field2();
                 let version = x.version();
-                let sx = RegisterField::from_field_boxed(&self.x);
-                let sy = RegisterField::from_field_boxed(&self.y);
-                let sz = RegisterField::from_field_boxed(&self.z);
+                let sx = from_field_boxed!(&self.x);
+                let sy = from_field_boxed!(&self.y);
+                let sz = from_field_boxed!(&self.z);
 
                 let version = sx.version();
 
                 let A = Integer::from_str_radix($Struct::A, 16).expect("Parse String Failed");
                 let ysq = sy.pow(2);
-                let s = RegisterField::from_incomplete(sx.mat_mul(4) * ysq.clone(), Some(version));
-                let m = RegisterField::from_incomplete(
+                let s = from_incomplete!(sx.mat_mul(4) * ysq.clone(), version);
+                let m = from_incomplete!(
                     sx.pow(2).mat_mul(3) + sz.pow(4).mat_mul(A),
-                    Some(version),
+                    version
                 );
-                let nx = RegisterField::from_incomplete(m.pow(2) - s.mat_mul(2), Some(version));
+                let nx = from_incomplete!(m.pow(2) - s.mat_mul(2), version);
                 let ny = {
-                    let v1 = RegisterField::from_incomplete(s - nx.clone(), Some(version));
-                    let v2 = RegisterField::from_incomplete(m * v1, Some(version));
+                    let v1 = from_incomplete!(s - nx.clone(), version);
+                    let v2 = from_incomplete!(m * v1, version);
                     let v3 = ysq.pow(2).mat_mul(8);
                     v3
                 };
                 let nz = {
-                    let field2 = RegisterField::from_incomplete(
+                    let field2 = from_incomplete!(
                         InCompleteField::new(Complex::with_val(COMPLEX_PREC, (2, 0))),
-                        Some(version),
+                        version
                     );
-                    let v1 = RegisterField::from_incomplete(field2 * sy, Some(version));
-                    let v2 = RegisterField::from_incomplete(sz * v1, Some(version));
+                    let v1 = from_incomplete!(field2 * sy, version);
+                    let v2 = from_incomplete!(sz * v1, version);
                     v2
                 };
 
@@ -443,27 +455,27 @@ macro_rules! jacobian_group {
                 let group = RegisterGroup::from_any(g);
                 let (gx, gy, gz) = match group {
                     RegisterGroup::V5(group) => (
-                        RegisterField::from_field_boxed(&group.x),
-                        RegisterField::from_field_boxed(&group.y),
-                        RegisterField::from_field_boxed(&group.z),
+                        from_field_boxed!(&group.x),
+                        from_field_boxed!(&group.y),
+                        from_field_boxed!(&group.z),
                     ),
                     RegisterGroup::V6(group) => (
-                        RegisterField::from_field_boxed(&group.x),
-                        RegisterField::from_field_boxed(&group.y),
-                        RegisterField::from_field_boxed(&group.z),
+                        from_field_boxed!(&group.x),
+                        from_field_boxed!(&group.y),
+                        from_field_boxed!(&group.z),
                     ),
                     _ => unreachable!(),
                 };
 
-                let sx = RegisterField::from_field_boxed(&self.x);
-                let sy = RegisterField::from_field_boxed(&self.y);
-                let sz = RegisterField::from_field_boxed(&self.z);
+                let sx = from_field_boxed!(&self.x);
+                let sy = from_field_boxed!(&self.y);
+                let sz = from_field_boxed!(&self.z);
                 let version = sx.version();
 
-                let u1 = RegisterField::from_incomplete(sx.clone() * gz.pow(2), Some(version));
-                let u2 = RegisterField::from_incomplete(gx.clone() * sz.pow(2), Some(version));
-                let s1 = RegisterField::from_incomplete(sy.clone() * gz.pow(3), Some(version));
-                let s2 = RegisterField::from_incomplete(gy.clone() * sz.pow(3), Some(version));
+                let u1 = from_incomplete!(sx.clone() * gz.pow(2), version);
+                let u2 = from_incomplete!(gx.clone() * sz.pow(2), version);
+                let s1 = from_incomplete!(sy.clone() * gz.pow(3), version);
+                let s2 = from_incomplete!(gy.clone() * sz.pow(3), version);
 
                 if u1 == u2 && s1 != s2 {
                     return $Struct {
@@ -482,33 +494,33 @@ macro_rules! jacobian_group {
                     };
                 }
 
-                let h = RegisterField::from_incomplete(
+                let h = from_incomplete!(
                     InCompleteField::new(u2.into_inner() - u1.into_inner()),
-                    Some(version),
+                    version
                 );
-                let r = RegisterField::from_incomplete(
+                let r = from_incomplete!(
                     InCompleteField::new(s2.into_inner() - s1.into_inner()),
-                    Some(version),
+                    version
                 );
-                let h2 = RegisterField::from_incomplete(h.clone() * h.clone(), Some(version));
-                let h3 = RegisterField::from_incomplete(h2.clone() * h.clone(), Some(version));
-                let u1h2 = RegisterField::from_incomplete(u1.clone() * h2.clone(), Some(version));
+                let h2 = from_incomplete!(h.clone() * h.clone(), version);
+                let h3 = from_incomplete!(h2.clone() * h.clone(), version);
+                let u1h2 = from_incomplete!(u1.clone() * h2.clone(), version);
 
                 let nx = {
-                    let v1 = RegisterField::from_incomplete(r.pow(2) - h3.clone(), Some(version));
-                    let v2 = RegisterField::from_incomplete(v1 - u1h2.mat_mul(2), Some(version));
+                    let v1 = from_incomplete!(r.pow(2) - h3.clone(), version);
+                    let v2 = from_incomplete!(v1 - u1h2.mat_mul(2), version);
                     v2
                 };
                 let ny = {
-                    let v1 = RegisterField::from_incomplete(u1h2 - nx.clone(), Some(version));
-                    let v2 = RegisterField::from_incomplete(s1 * h3, Some(version));
-                    let v3 = RegisterField::from_incomplete(r * v1, Some(version));
-                    let v4 = RegisterField::from_incomplete(v3 - v2, Some(version));
+                    let v1 = from_incomplete!(u1h2 - nx.clone(), version);
+                    let v2 = from_incomplete!(s1 * h3, version);
+                    let v3 = from_incomplete!(r * v1, version);
+                    let v4 = from_incomplete!(v3 - v2, version);
                     v4
                 };
                 let nz = {
-                    let v1 = RegisterField::from_incomplete(h * sz, Some(version));
-                    let v2 = RegisterField::from_incomplete(gz * v1, Some(version));
+                    let v1 = from_incomplete!(h * sz, version);
+                    let v2 = from_incomplete!(gz * v1, version);
                     v2
                 };
                 $Struct {
