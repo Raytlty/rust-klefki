@@ -1,4 +1,4 @@
-use crate::types::algebra::field::InCompleteField;
+use crate::types::algebra::registers::InCompleteField;
 use rug::Complex;
 use std::any::Any;
 

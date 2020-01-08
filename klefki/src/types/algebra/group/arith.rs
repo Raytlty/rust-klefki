@@ -3,16 +3,17 @@ use crate::constrant::{
     SECP256K1_P, SECP256R1_A, SECP256R1_B, SECP256R1_GX, SECP256R1_GY, SECP256R1_N, SECP256R1_P,
 };
 use crate::types::algebra::field::{
-    cast_to_field::RegisterField, FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1,
-    FiniteFieldSecp256k1, FiniteFieldSecp256r1, InCompleteField,
+    FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
+    FiniteFieldSecp256r1,
 };
+use crate::types::algebra::registers::{InCompleteField, RegisterField, RegisterGroup};
 use crate::types::algebra::traits::{
     ConstA, ConstB, ConstN, ConstP, Field, Group, Identity, SecGroup, SecIdentity,
 };
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
 use std::marker::PhantomData;
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
 lazy_static! {
     static ref SECP256k1X: FiniteFieldSecp256k1 = FiniteFieldSecp256k1::new(SECP256K1_GX);
@@ -23,51 +24,51 @@ lazy_static! {
 
 #[derive(Clone)]
 pub struct EllipticCurveCyclicSubgroupSecp256k1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    pub x: Box<dyn Field>,
+    pub y: Box<dyn Field>,
 }
 
 #[derive(Clone)]
 pub struct EllipticCurveGroupSecp256k1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    pub x: Box<dyn Field>,
+    pub y: Box<dyn Field>,
 }
 
 #[derive(Clone)]
 pub struct JacobianGroupSecp256k1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
-    z: Box<dyn Field>,
+    pub x: Box<dyn Field>,
+    pub y: Box<dyn Field>,
+    pub z: Box<dyn Field>,
 }
 
 #[derive(Clone)]
 pub struct EllipticCurveGroupSecp256r1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    pub x: Box<dyn Field>,
+    pub y: Box<dyn Field>,
 }
 
 #[derive(Clone)]
 pub struct JacobianGroupSecp256r1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
-    z: Box<dyn Field>,
+    pub x: Box<dyn Field>,
+    pub y: Box<dyn Field>,
+    pub z: Box<dyn Field>,
 }
 
 #[derive(Clone)]
 pub struct EllipticCurveCyclicSubgroupSecp256r1 {
-    x: Box<dyn Field>,
-    y: Box<dyn Field>,
+    pub x: Box<dyn Field>,
+    pub y: Box<dyn Field>,
 }
 
 macro_rules! impl_const {
     () => {};
     (
-        $structName:ident
+        $Struct:ident
         $impl_lt:tt
         $($trait_name: ident, $variable_name:ident, $trait_input:ident;)*
     ) => {
         $(
-            impl<$impl_lt> $trait_name<$impl_lt> for $structName
+            impl<$impl_lt> $trait_name<$impl_lt> for $Struct
             {
                 const $variable_name: &$impl_lt str = $trait_input;
             }
@@ -83,21 +84,6 @@ impl_const!(
     ConstN, N, SECP256K1_N;
 );
 
-impl EllipticCurveGroupSecp256k1 {
-    pub fn new(x: Box<dyn Field>, y: Option<Box<dyn Field>>) -> Self {
-        let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
-        EllipticCurveGroupSecp256k1 { x, y }
-    }
-}
-
-impl Default for EllipticCurveGroupSecp256k1 {
-    fn default() -> Self {
-        let x = Box::new(FiniteFieldSecp256k1::new("0"));
-        let y = Box::new(FiniteFieldSecp256k1::new("0"));
-        EllipticCurveGroupSecp256k1 { x, y }
-    }
-}
-
 impl_const!(
     EllipticCurveCyclicSubgroupSecp256k1
     'a
@@ -106,44 +92,12 @@ impl_const!(
     ConstN, N, SECP256K1_N;
 );
 
-impl EllipticCurveCyclicSubgroupSecp256k1 {
-    pub fn new(x: Box<dyn Field>, y: Option<Box<dyn Field>>) -> Self {
-        let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
-        EllipticCurveCyclicSubgroupSecp256k1 { x, y }
-    }
-}
-
-impl Default for EllipticCurveCyclicSubgroupSecp256k1 {
-    fn default() -> Self {
-        let x = Box::new(FiniteFieldSecp256k1::new("0"));
-        let y = Box::new(FiniteFieldSecp256k1::new("0"));
-        EllipticCurveCyclicSubgroupSecp256k1 { x, y }
-    }
-}
-
 impl_const!(
     JacobianGroupSecp256k1
     'a
     ConstA, A, SECP256K1_A;
     ConstB, B, SECP256K1_B;
 );
-
-impl JacobianGroupSecp256k1 {
-    pub fn new(x: Box<dyn Field>, y: Option<Box<dyn Field>>, z: Option<Box<dyn Field>>) -> Self {
-        let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
-        let z = z.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
-        JacobianGroupSecp256k1 { x, y, z }
-    }
-}
-
-impl Default for JacobianGroupSecp256k1 {
-    fn default() -> Self {
-        let x = Box::new(FiniteFieldSecp256k1::new("0"));
-        let y = Box::new(FiniteFieldSecp256k1::new("0"));
-        let z = Box::new(FiniteFieldSecp256k1::new("0"));
-        JacobianGroupSecp256k1 { x, y, z }
-    }
-}
 
 impl_const!(
     EllipticCurveGroupSecp256r1
@@ -152,44 +106,12 @@ impl_const!(
     ConstB, B, SECP256K1_B;
 );
 
-impl EllipticCurveGroupSecp256r1 {
-    pub fn new(x: Box<dyn Field>, y: Option<Box<dyn Field>>) -> Self {
-        let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
-        EllipticCurveGroupSecp256r1 { x, y }
-    }
-}
-
-impl Default for EllipticCurveGroupSecp256r1 {
-    fn default() -> Self {
-        let x = Box::new(FiniteFieldSecp256k1::new("0"));
-        let y = Box::new(FiniteFieldSecp256k1::new("0"));
-        EllipticCurveGroupSecp256r1 { x, y }
-    }
-}
-
 impl_const!(
     JacobianGroupSecp256r1
     'a
     ConstA, A, SECP256R1_A;
     ConstB, B, SECP256R1_B;
 );
-
-impl JacobianGroupSecp256r1 {
-    pub fn new(x: Box<dyn Field>, y: Option<Box<dyn Field>>, z: Option<Box<dyn Field>>) -> Self {
-        let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
-        let z = z.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
-        JacobianGroupSecp256r1 { x, y, z }
-    }
-}
-
-impl Default for JacobianGroupSecp256r1 {
-    fn default() -> Self {
-        let x = Box::new(FiniteFieldSecp256k1::new("0"));
-        let y = Box::new(FiniteFieldSecp256k1::new("0"));
-        let z = Box::new(FiniteFieldSecp256k1::new("0"));
-        JacobianGroupSecp256r1 { x, y, z }
-    }
-}
 
 impl_const!(
     EllipticCurveCyclicSubgroupSecp256r1
@@ -199,21 +121,6 @@ impl_const!(
     ConstN, N, SECP256R1_N;
 );
 
-impl EllipticCurveCyclicSubgroupSecp256r1 {
-    pub fn new(x: Box<dyn Field>, y: Option<Box<dyn Field>>) -> Self {
-        let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
-        EllipticCurveCyclicSubgroupSecp256r1 { x, y }
-    }
-}
-
-impl Default for EllipticCurveCyclicSubgroupSecp256r1 {
-    fn default() -> Self {
-        let x = Box::new(FiniteFieldSecp256k1::new("0"));
-        let y = Box::new(FiniteFieldSecp256k1::new("0"));
-        EllipticCurveCyclicSubgroupSecp256r1 { x, y }
-    }
-}
-
 impl EllipticCurveGroupSecp256k1 {
     fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1 {
         EllipticCurveCyclicSubgroupSecp256k1 {
@@ -249,98 +156,6 @@ impl EllipticCurveCyclicSubgroupSecp256r1 {
         }
     }
 }
-
-pub(crate) mod cast_to_group {
-
-    use super::{
-        EllipticCurveCyclicSubgroupSecp256k1, EllipticCurveCyclicSubgroupSecp256r1,
-        EllipticCurveGroupSecp256k1, EllipticCurveGroupSecp256r1, JacobianGroupSecp256k1,
-        JacobianGroupSecp256r1,
-    };
-    use crate::types::algebra::field::cast_to_field::RegisterField;
-    use std::any::{Any, TypeId};
-
-    pub enum RegisterGroup {
-        V1(EllipticCurveGroupSecp256k1),
-        V2(EllipticCurveGroupSecp256r1),
-        V3(EllipticCurveCyclicSubgroupSecp256k1),
-        V4(EllipticCurveCyclicSubgroupSecp256r1),
-        V5(JacobianGroupSecp256k1),
-        V6(JacobianGroupSecp256r1),
-    }
-
-    impl RegisterGroup {
-        pub fn into_field(&self) -> (RegisterField, RegisterField) {
-            match self {
-                RegisterGroup::V1(group) => (
-                    RegisterField::from_field_boxed(&group.x),
-                    RegisterField::from_field_boxed(&group.y),
-                ),
-                RegisterGroup::V2(group) => (
-                    RegisterField::from_field_boxed(&group.x),
-                    RegisterField::from_field_boxed(&group.y),
-                ),
-                RegisterGroup::V3(group) => (
-                    RegisterField::from_field_boxed(&group.x),
-                    RegisterField::from_field_boxed(&group.y),
-                ),
-                RegisterGroup::V4(group) => (
-                    RegisterField::from_field_boxed(&group.x),
-                    RegisterField::from_field_boxed(&group.y),
-                ),
-                _ => unreachable!(),
-            }
-        }
-        pub fn from_any(x: &dyn Any) -> RegisterGroup {
-            if TypeId::of::<EllipticCurveGroupSecp256k1>() == x.type_id() {
-                RegisterGroup::V1(
-                    x.downcast_ref::<EllipticCurveGroupSecp256k1>()
-                        .expect(
-                            "RegisterGroup downcast_ref from EllipticCurveGroupSecp256k1 Failed",
-                        )
-                        .clone(),
-                )
-            } else if TypeId::of::<EllipticCurveGroupSecp256r1>() == x.type_id() {
-                RegisterGroup::V2(
-                    x.downcast_ref::<EllipticCurveGroupSecp256r1>()
-                        .expect(
-                            "RegisterGroup downcast_ref from EllipticCurveGroupSecp256r1 Failed",
-                        )
-                        .clone(),
-                )
-            } else if TypeId::of::<EllipticCurveCyclicSubgroupSecp256k1>() == x.type_id() {
-                RegisterGroup::V3(
-                   x.downcast_ref::<EllipticCurveCyclicSubgroupSecp256k1>()
-                        .expect(
-                            "RegisterGroup downcast_ref from EllipticCurveCyclicSubgroupSecp256r1 Failed",
-                        )
-                        .clone()
-                )
-            } else if TypeId::of::<EllipticCurveCyclicSubgroupSecp256r1>() == x.type_id() {
-                RegisterGroup::V4(
-                    x.downcast_ref::<EllipticCurveCyclicSubgroupSecp256r1>()
-                        .expect(
-                            "RegisterGroup downcast_ref from EllipticCurveCyclicSubgroupSecp256r1 Failed",
-                        )
-                        .clone()
-                )
-            } else if TypeId::of::<JacobianGroupSecp256k1>() == x.type_id() {
-                RegisterGroup::V5(
-                    x.downcast_ref::<JacobianGroupSecp256k1>()
-                        .expect("RegisterGroup downcast_ref from JacobianGroupSecp256k1 Failed")
-                        .clone(),
-                )
-            } else {
-                RegisterGroup::V6(
-                    x.downcast_ref::<JacobianGroupSecp256r1>()
-                        .expect("RegisterGroup downcast_ref from JacobianGroupSecp256r1 Failed")
-                        .clone(),
-                )
-            }
-        }
-    }
-}
-use cast_to_group::RegisterGroup;
 
 fn choose_field_from_version(v: Complex, version: i8) -> Box<dyn Field> {
     if version == 1 {
@@ -355,27 +170,42 @@ fn choose_field_from_version(v: Complex, version: i8) -> Box<dyn Field> {
 }
 
 macro_rules! elliptic_curve_group {
-    ($structName: ident) => {
-        impl Identity for $structName {
-            fn identity() -> Self {
-                $structName::default()
+    ($Struct: ident) => {
+        impl $Struct {
+            pub fn new(x: Box<dyn Field>, y: Option<Box<dyn Field>>) -> Self {
+                let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
+                $Struct { x, y }
             }
         }
 
-        impl PartialEq for $structName {
+        impl Default for $Struct {
+            fn default() -> Self {
+                let x = Box::new(FiniteFieldSecp256k1::new("0"));
+                let y = Box::new(FiniteFieldSecp256k1::new("0"));
+                $Struct { x, y }
+            }
+        }
+
+        impl Identity for $Struct {
+            fn identity() -> Self {
+                $Struct::default()
+            }
+        }
+
+        impl PartialEq for $Struct {
             fn eq(&self, other: &Self) -> bool {
                 self.x.value() == other.x.value() && self.y.value() == other.y.value()
             }
         }
 
-        impl Group for $structName {
+        impl Group for $Struct {
             fn inverse(&self) -> Self {
                 let x = RegisterField::from_field_boxed(&self.x);
                 let y = RegisterField::from_field_boxed(&self.y);
                 let versionx = x.version();
                 let versiony = y.version();
                 let y = RegisterField::from_incomplete(-y, Some(versiony));
-                $structName {
+                $Struct {
                     x: choose_field_from_version(x.into_inner(), versionx),
                     y: choose_field_from_version(y.into_inner(), versiony),
                 }
@@ -396,10 +226,9 @@ macro_rules! elliptic_curve_group {
                         / RegisterField::from_incomplete(x1.clone() - x2.clone(), Some(versionx))
                 } else {
                     if y1 == RegisterField::from_incomplete(-y2, Some(versiony)) {
-                        return $structName::identity();
+                        return $Struct::identity();
                     }
-                    let A = Integer::from_str_radix($structName::A, 16)
-                        .expect("Parse ConstA Failed")
+                    let A = Integer::from_str_radix($Struct::A, 16).expect("Parse ConstA Failed")
                         + Complex::new(COMPLEX_PREC);
                     let field3 = choose_field_from_version(
                         Complex::with_val(COMPLEX_PREC, (3, 0)),
@@ -439,35 +268,14 @@ macro_rules! elliptic_curve_group {
                 let ry = RegisterField::from_incomplete(-ry, Some(versionx));
                 let rx_boxed = choose_field_from_version(rx.into_inner(), versionx);
                 let ry_boxed = choose_field_from_version(ry.into_inner(), versiony);
-                $structName {
+                $Struct {
                     x: rx_boxed,
                     y: ry_boxed,
                 }
             }
         }
 
-        impl Add for $structName {
-            type Output = Self;
-            fn add(self, other: Self) -> Self::Output {
-                self.op(&other)
-            }
-        }
-
-        impl Mul for $structName {
-            type Output = Self;
-            fn mul(self, other: Self) -> Self::Output {
-                self + other
-            }
-        }
-
-        impl Sub for $structName {
-            type Output = Self;
-            fn sub(self, other: Self) -> Self::Output {
-                self.op(&other.inverse())
-            }
-        }
-
-        impl Neg for $structName {
+        impl Neg for $Struct {
             type Output = Self;
             fn neg(self) -> Self::Output {
                 self.inverse()
@@ -477,17 +285,17 @@ macro_rules! elliptic_curve_group {
 }
 
 macro_rules! cyclic_add_group {
-    ($structName: ident) => {
-        impl Identity for $structName {
+    ($Struct: ident) => {
+        impl Identity for $Struct {
             fn identity() -> Self {
-                $structName::default()
+                $Struct::default()
             }
         }
 
-        impl Group for $structName {
+        impl Group for $Struct {
             fn inverse(&self) -> Self {
                 let a: Complex = Integer::from(0)
-                    % Integer::from_str_radix($structName::N, 16)
+                    % Integer::from_str_radix($Struct::N, 16)
                         .expect("Cannot parse from string")
                     + Complex::new(COMPLEX_PREC);
 
@@ -498,7 +306,7 @@ macro_rules! cyclic_add_group {
                 let v = a * b;
                 let rx_boxed = choose_field_from_version(v, version);
 
-                $structName::new(rx_boxed, None)
+                $Struct::new(rx_boxed, None)
             }
 
             fn op(&self, g: &dyn Any) -> Self {
@@ -515,14 +323,14 @@ macro_rules! cyclic_add_group {
                     Some(i) => i,
                     None => unreachable!();
                 };
-                let N = Integer::from_str_radix($structName::N, 16).expect("Parse from string failed");
+                let N = Integer::from_str_radix($Struct::N, 16).expect("Parse from string failed");
                 let (_, result) = (x1 + x2).div_rem(N);
                 let rx_boxed = choose_field_from_version(result + Complex::new(COMPLEX_PREC), version);
-                $structName::new(rx_boxed, None)
+                $Struct::new(rx_boxed, None)
             }
         }
 
-        impl $structName {
+        impl $Struct {
             pub fn pow(&self, item: &dyn Any) -> Self {
                 let group = RegisterGroup::from_any(g);
                 let (x1, _) = group.into_field();
@@ -537,24 +345,45 @@ macro_rules! cyclic_add_group {
                     Some(i) => i,
                     None => unreachable!();
                 };
-                let N = Integer::from_str_radix($structName::N, 16).expect("Parse from string failed");
+                let N = Integer::from_str_radix($Struct::N, 16).expect("Parse from string failed");
                 let result = x2.secure_pow_mod(&x1, &N);
                 let rx_boxed = choose_field_from_version(result + Complex::new(COMPLEX_PREC), version);
-                $structName::new(rx_boxed, None)
+                $Struct::new(rx_boxed, None)
             }
         }
     };
 }
 
 macro_rules! jacobian_group {
-    ($structName: ident) => {
-        impl Identity for $structName {
-            fn identity() -> Self {
-                $structName::default()
+    ($Struct: ident) => {
+        impl $Struct {
+            pub fn new(
+                x: Box<dyn Field>,
+                y: Option<Box<dyn Field>>,
+                z: Option<Box<dyn Field>>,
+            ) -> Self {
+                let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
+                let z = z.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
+                $Struct { x, y, z }
             }
         }
 
-        impl PartialEq for $structName {
+        impl Default for $Struct {
+            fn default() -> Self {
+                let x = Box::new(FiniteFieldSecp256k1::new("0"));
+                let y = Box::new(FiniteFieldSecp256k1::new("0"));
+                let z = Box::new(FiniteFieldSecp256k1::new("0"));
+                $Struct { x, y, z }
+            }
+        }
+
+        impl Identity for $Struct {
+            fn identity() -> Self {
+                $Struct::default()
+            }
+        }
+
+        impl PartialEq for $Struct {
             fn eq(&self, other: &Self) -> bool {
                 self.x.value() == other.x.value()
                     && self.y.value() == other.y.value()
@@ -562,22 +391,10 @@ macro_rules! jacobian_group {
             }
         }
 
-        impl $structName {
+        impl $Struct {
             fn double(&self, n: &dyn Any) -> Self {
                 let group = RegisterGroup::from_any(n);
-                let (x, y, z) = match group {
-                    RegisterGroup::V5(group) => (
-                        RegisterField::from_field_boxed(&group.x),
-                        RegisterField::from_field_boxed(&group.y),
-                        RegisterField::from_field_boxed(&group.z),
-                    ),
-                    RegisterGroup::V6(group) => (
-                        RegisterField::from_field_boxed(&group.x),
-                        RegisterField::from_field_boxed(&group.y),
-                        RegisterField::from_field_boxed(&group.z),
-                    ),
-                    _ => unreachable!(),
-                };
+                let (x, y, z) = group.into_field2();
                 let version = x.version();
                 let sx = RegisterField::from_field_boxed(&self.x);
                 let sy = RegisterField::from_field_boxed(&self.y);
@@ -585,7 +402,7 @@ macro_rules! jacobian_group {
 
                 let version = sx.version();
 
-                let A = Integer::from_str_radix($structName::A, 16).expect("Parse String Failed");
+                let A = Integer::from_str_radix($Struct::A, 16).expect("Parse String Failed");
                 let ysq = sy.pow(2);
                 let s = RegisterField::from_incomplete(sx.mat_mul(4) * ysq.clone(), Some(version));
                 let m = RegisterField::from_incomplete(
@@ -609,7 +426,7 @@ macro_rules! jacobian_group {
                     v2
                 };
 
-                $structName {
+                $Struct {
                     x: choose_field_from_version(nx.into_inner(), version),
                     y: choose_field_from_version(ny.into_inner(), version),
                     z: choose_field_from_version(nz.into_inner(), version),
@@ -617,7 +434,7 @@ macro_rules! jacobian_group {
             }
         }
 
-        impl Group for $structName {
+        impl Group for $Struct {
             fn inverse(&self) -> Self {
                 unreachable!();
             }
@@ -649,7 +466,7 @@ macro_rules! jacobian_group {
                 let s2 = RegisterField::from_incomplete(gy.clone() * sz.pow(3), Some(version));
 
                 if u1 == u2 && s1 != s2 {
-                    return $structName {
+                    return $Struct {
                         x: choose_field_from_version(
                             Complex::new(COMPLEX_PREC) + Integer::from(0),
                             version,
@@ -694,25 +511,11 @@ macro_rules! jacobian_group {
                     let v2 = RegisterField::from_incomplete(gz * v1, Some(version));
                     v2
                 };
-                $structName {
+                $Struct {
                     x: choose_field_from_version(nx.into_inner(), version),
                     y: choose_field_from_version(ny.into_inner(), version),
                     z: choose_field_from_version(nz.into_inner(), version),
                 }
-            }
-        }
-
-        impl Add for $structName {
-            type Output = Self;
-            fn add(self, other: Self) -> Self::Output {
-                self.op(&other)
-            }
-        }
-
-        impl Mul for $structName {
-            type Output = Self;
-            fn mul(self, other: Self) -> Self::Output {
-                self + other
             }
         }
     };
@@ -724,6 +527,174 @@ elliptic_curve_group!(EllipticCurveGroupSecp256k1);
 elliptic_curve_group!(EllipticCurveGroupSecp256r1);
 elliptic_curve_group!(EllipticCurveCyclicSubgroupSecp256k1);
 elliptic_curve_group!(EllipticCurveCyclicSubgroupSecp256r1);
+
+arith_binary_self!(
+    EllipticCurveGroupSecp256k1, EllipticCurveGroupSecp256k1;
+    Add {
+        add,
+        |lhs: EllipticCurveGroupSecp256k1, rhs: EllipticCurveGroupSecp256k1| {
+            lhs.op(&rhs)
+        }
+    };
+    AddAssign {
+        add_assign
+    };
+    Mul {
+        mul,
+        |lhs: EllipticCurveGroupSecp256k1, rhs: EllipticCurveGroupSecp256k1| {
+            lhs + rhs
+        }
+    };
+    MulAssign {
+        mul_assign
+    };
+    Sub {
+        sub,
+        |lhs: EllipticCurveGroupSecp256k1, rhs: EllipticCurveGroupSecp256k1| {
+            lhs.op(&rhs.inverse())
+        }
+    };
+    SubAssign {
+        sub_assign
+    };
+);
+
+arith_binary_self!(
+    EllipticCurveGroupSecp256r1, EllipticCurveGroupSecp256r1;
+    Add {
+        add,
+        |lhs: EllipticCurveGroupSecp256r1, rhs: EllipticCurveGroupSecp256r1| {
+            lhs.op(&rhs)
+        }
+    };
+    AddAssign {
+        add_assign
+    };
+    Mul {
+        mul,
+        |lhs: EllipticCurveGroupSecp256r1, rhs: EllipticCurveGroupSecp256r1| {
+            lhs + rhs
+        }
+    };
+    MulAssign {
+        mul_assign
+    };
+    Sub {
+        sub,
+        |lhs: EllipticCurveGroupSecp256r1, rhs: EllipticCurveGroupSecp256r1| {
+            lhs.op(&rhs.inverse())
+        }
+    };
+    SubAssign {
+        sub_assign
+    };
+);
+
+arith_binary_self!(
+    EllipticCurveCyclicSubgroupSecp256k1, EllipticCurveCyclicSubgroupSecp256k1;
+    Add {
+        add,
+        |lhs: EllipticCurveCyclicSubgroupSecp256k1, rhs: EllipticCurveCyclicSubgroupSecp256k1| {
+            lhs.op(&rhs)
+        }
+    };
+    AddAssign {
+        add_assign
+    };
+    Mul {
+        mul,
+        |lhs: EllipticCurveCyclicSubgroupSecp256k1, rhs: EllipticCurveCyclicSubgroupSecp256k1| {
+            lhs + rhs
+        }
+    };
+    MulAssign {
+        mul_assign
+    };
+    Sub {
+        sub,
+        |lhs: EllipticCurveCyclicSubgroupSecp256k1, rhs: EllipticCurveCyclicSubgroupSecp256k1| {
+            lhs.op(&rhs.inverse())
+        }
+    };
+    SubAssign {
+        sub_assign
+    };
+);
+
+arith_binary_self!(
+    EllipticCurveCyclicSubgroupSecp256r1, EllipticCurveCyclicSubgroupSecp256r1;
+    Add {
+        add,
+        |lhs: EllipticCurveCyclicSubgroupSecp256r1, rhs: EllipticCurveCyclicSubgroupSecp256r1| {
+            lhs.op(&rhs)
+        }
+    };
+    AddAssign {
+        add_assign
+    };
+    Mul {
+        mul,
+        |lhs: EllipticCurveCyclicSubgroupSecp256r1, rhs: EllipticCurveCyclicSubgroupSecp256r1| {
+            lhs + rhs
+        }
+    };
+    MulAssign {
+        mul_assign
+    };
+    Sub {
+        sub,
+        |lhs: EllipticCurveCyclicSubgroupSecp256r1, rhs: EllipticCurveCyclicSubgroupSecp256r1| {
+            lhs.op(&rhs.inverse())
+        }
+    };
+    SubAssign {
+        sub_assign
+    };
+);
+
+arith_binary_self!(
+    JacobianGroupSecp256k1, JacobianGroupSecp256k1;
+    Add {
+        add,
+        |lhs: JacobianGroupSecp256k1, rhs: JacobianGroupSecp256k1| {
+            lhs.op(&rhs)
+        }
+    };
+    AddAssign {
+        add_assign
+    };
+    Mul {
+        mul,
+        |lhs: JacobianGroupSecp256k1, rhs: JacobianGroupSecp256k1| {
+            lhs + rhs
+        }
+    };
+    MulAssign {
+        mul_assign
+    };
+);
+
+arith_binary_self!(
+    JacobianGroupSecp256r1, JacobianGroupSecp256r1;
+    Add {
+        add,
+        |lhs: JacobianGroupSecp256r1, rhs: JacobianGroupSecp256r1| {
+            lhs.op(&rhs)
+        }
+    };
+    AddAssign {
+        add_assign
+    };
+    Mul {
+        mul,
+        |lhs: JacobianGroupSecp256r1, rhs: JacobianGroupSecp256r1| {
+            lhs + rhs
+        }
+    };
+    MulAssign {
+        mul_assign
+    };
+);
 
 #[cfg(test)]
 mod test {

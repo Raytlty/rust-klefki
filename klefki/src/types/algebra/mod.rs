@@ -1,9 +1,8 @@
 #[macro_use]
 mod macros;
-mod compare;
-mod concrete;
 mod field;
 mod group;
+mod registers;
 mod traits;
 
 //use traits::{
