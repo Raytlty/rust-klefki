@@ -25,7 +25,7 @@ macro_rules! eq_re{
             }
         }
     };
-    ($St: ident; $($Re: ty)*) => { $(
+    ($St:ident; $($Re: ty)*) => { $(
         impl PartialEq<$Re> for $St {
             #[inline]
             fn eq(&self, other: &$Re) -> bool {
@@ -51,24 +51,24 @@ eq_re!(
 );
 
 eq_re!(
-    FiniteFieldSecp256r1;
-    i8 i16 i32 i128 isize
-    u8 u16 u32 u128 usize
-    f32 f64
+FiniteFieldSecp256r1;
+i8 i16 i32 i128 isize
+u8 u16 u32 u128 usize
+f32 f64
 );
 
 eq_re!(
-    FiniteFieldCyclicSecp256k1;
-    i8 i16 i32 i128 isize
-    u8 u16 u32 u128 usize
-    f32 f64
+FiniteFieldCyclicSecp256k1;
+i8 i16 i32 i128 isize
+u8 u16 u32 u128 usize
+f32 f64
 );
 
 eq_re!(
-    FiniteFieldCyclicSecp256r1;
-    i8 i16 i32 i128 isize
-    u8 u16 u32 u128 usize
-    f32 f64
+FiniteFieldCyclicSecp256r1;
+i8 i16 i32 i128 isize
+u8 u16 u32 u128 usize
+f32 f64
 );
 
 eq_re!(FiniteFieldSecp256k1, FiniteFieldSecp256r1);
