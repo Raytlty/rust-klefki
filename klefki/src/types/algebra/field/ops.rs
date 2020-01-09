@@ -44,7 +44,7 @@ macro_rules! arith_prim {
     )*};
 }
 
-//macro_rules! arith_group {
+//macro_rules! arith_ecg {
     //(
         //$Big: ty, $BigName: ident;
         //$Imp: ident {$method: ident, $func: expr};
@@ -59,6 +59,7 @@ use crate::types::algebra::field::{
     FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
     FiniteFieldSecp256r1,
 };
+use crate::constrant::COMPLEX_PREC;
 use rug::{Complex, Integer};
 use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
 
