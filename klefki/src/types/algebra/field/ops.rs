@@ -71,6 +71,141 @@ arith_prim!(
     f32; f64;
 );
 
+arith_prim!(
+    FiniteFieldSecp256k1, FiniteFieldSecp256k1;
+    Sub {sub};
+    SubAssign {sub_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldSecp256k1, FiniteFieldSecp256k1;
+    Mul {mul};
+    MulAssign {mul_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldSecp256k1, FiniteFieldSecp256k1;
+    Div {div};
+    DivAssign {div_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldSecp256r1, FiniteFieldSecp256r1;
+    Add {add};
+    AddAssign {add_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldSecp256r1, FiniteFieldSecp256r1;
+    Sub {sub};
+    SubAssign {sub_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldSecp256r1, FiniteFieldSecp256r1;
+    Mul {mul};
+    MulAssign {mul_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldSecp256r1, FiniteFieldSecp256r1;
+    Div {div};
+    DivAssign {div_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+
+arith_prim!(
+    FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256k1;
+    Add {add};
+    AddAssign {add_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256k1;
+    Sub {sub};
+    SubAssign {sub_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256k1;
+    Mul {mul};
+    MulAssign {mul_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256k1;
+    Div {div};
+    DivAssign {div_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldCyclicSecp256r1, FiniteFieldCyclicSecp256r1;
+    Add {add};
+    AddAssign {add_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldCyclicSecp256r1, FiniteFieldCyclicSecp256r1;
+    Sub {sub};
+    SubAssign {sub_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldCyclicSecp256r1, FiniteFieldCyclicSecp256r1;
+    Mul {mul};
+    MulAssign {mul_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
+
+arith_prim!(
+    FiniteFieldCyclicSecp256r1, FiniteFieldCyclicSecp256r1;
+    Div {div};
+    DivAssign {div_assign};
+    i8; i16; i32; i64; i128; 
+    u8; u16; u32; u64; u128;
+    f32; f64;
+);
 
 #[cfg(test)]
 mod test {
