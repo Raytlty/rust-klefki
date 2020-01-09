@@ -58,12 +58,12 @@ pub trait SecGroup {
 
 pub trait MatMul<Rhs = Self> {
     type Output;
-    fn mat_mul(&self, rhs: Rhs) -> Self::Output;
+    fn mat_mul(&self, rhs: &Rhs) -> Self::Output;
 }
 
 pub trait Pow<Rhs = Self> {
     type Output;
-    fn pow(&self, rhs: Rhs) -> Self::Output;
+    fn pow(&self, rhs: &Rhs) -> Self::Output;
 }
 
 pub trait Not {

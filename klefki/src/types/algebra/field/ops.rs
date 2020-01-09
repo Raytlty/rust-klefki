@@ -44,17 +44,6 @@ macro_rules! arith_prim {
     )*};
 }
 
-//macro_rules! arith_ecg {
-    //(
-        //$Big: ty, $BigName: ident;
-        //$Imp: ident {$method: ident, $func: expr};
-        //$ImpAssign: ident {$method_assign: ident};
-        //$G: ty, $GName: ident;
-    //) => {
-
-    //};
-//}
-
 use crate::types::algebra::field::{
     FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
     FiniteFieldSecp256r1,
