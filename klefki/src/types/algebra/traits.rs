@@ -1,4 +1,4 @@
-use crate::types::algebra::field::InCompleteField;
+use crate::types::algebra::registers::InCompleteField;
 use rug::Complex;
 use std::any::Any;
 
@@ -58,12 +58,12 @@ pub trait SecGroup {
 
 pub trait MatMul<Rhs = Self> {
     type Output;
-    fn mat_mul(&self, rhs: Rhs) -> Self::Output;
+    fn mat_mul(&self, rhs: &Rhs) -> Self::Output;
 }
 
 pub trait Pow<Rhs = Self> {
     type Output;
-    fn pow(&self, rhs: Rhs) -> Self::Output;
+    fn pow(&self, rhs: &Rhs) -> Self::Output;
 }
 
 pub trait Not {
