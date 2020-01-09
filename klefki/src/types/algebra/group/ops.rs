@@ -77,3 +77,29 @@ arith_combat!(
     FiniteFieldCyclicSecp256k1;
     FiniteFieldCyclicSecp256r1;
 );
+
+#[cfg(test)]
+mod test {
+    use super::{EllipticCurveGroupSecp256k1, FiniteFieldSecp256k1, MatMul, Pow};
+    use crate::types::algebra::traits::Identity;
+
+    #[test]
+    fn test_mat_mul() {
+        let g1 = EllipticCurveGroupSecp256k1::default();
+        let f1 = FiniteFieldSecp256k1::new("2");
+        let g_f = g1.mat_mul(&f1);
+
+        let g2 = g1.clone() + g1.clone() + EllipticCurveGroupSecp256k1::identity();
+        assert_eq!(g2 == g_f, true);
+    }
+
+    #[test]
+    fn test_pow() {
+        let g1 = EllipticCurveGroupSecp256k1::default();
+        let f1 = FiniteFieldSecp256k1::new("2");
+        let g_f = g1.pow(&f1);
+
+        let g2 = g1.clone() + g1.clone() + EllipticCurveGroupSecp256k1::identity();
+        assert_eq!(g2 == g_f, true);
+    }
+}
