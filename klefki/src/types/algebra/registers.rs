@@ -186,10 +186,10 @@ impl RegisterField {
         T: Into<Integer>,
     {
         match self {
-            RegisterField::V1(field) => RegisterField::V1(field.mat_mul(x)),
-            RegisterField::V2(field) => RegisterField::V2(field.mat_mul(x)),
-            RegisterField::V3(field) => RegisterField::V3(field.mat_mul(x)),
-            RegisterField::V4(field) => RegisterField::V4(field.mat_mul(x)),
+            RegisterField::V1(field) => RegisterField::V1(field.mat_mul(x.into())),
+            RegisterField::V2(field) => RegisterField::V2(field.mat_mul(x.into())),
+            RegisterField::V3(field) => RegisterField::V3(field.mat_mul(x.into())),
+            RegisterField::V4(field) => RegisterField::V4(field.mat_mul(x.into())),
         }
     }
 
@@ -198,10 +198,10 @@ impl RegisterField {
         T: Into<Integer>,
     {
         match self {
-            RegisterField::V1(field) => RegisterField::V1(field.pow(x)),
-            RegisterField::V2(field) => RegisterField::V2(field.pow(x)),
-            RegisterField::V3(field) => RegisterField::V3(field.pow(x)),
-            RegisterField::V4(field) => RegisterField::V4(field.pow(x)),
+            RegisterField::V1(field) => RegisterField::V1(field.pow(x.into())),
+            RegisterField::V2(field) => RegisterField::V2(field.pow(x.into())),
+            RegisterField::V3(field) => RegisterField::V3(field.pow(x.into())),
+            RegisterField::V4(field) => RegisterField::V4(field.pow(x.into())),
         }
     }
 

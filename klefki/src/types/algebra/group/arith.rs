@@ -25,13 +25,13 @@ lazy_static! {
 macro_rules! from_incomplete {
     ($Param: expr, $Version: expr) => {
         RegisterField::from_incomplete($Param, Some($Version))
-    }
+    };
 }
 
 macro_rules! from_field_boxed {
     ($Param: expr) => {
         RegisterField::from_field_boxed($Param)
-    }
+    };
 }
 
 #[derive(Clone)]
@@ -134,38 +134,98 @@ impl_const!(
 );
 
 impl EllipticCurveGroupSecp256k1 {
-    fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1 {
+    pub fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1 {
         EllipticCurveCyclicSubgroupSecp256k1 {
             x: Box::new(SECP256k1X.clone()),
             y: Box::new(SECP256k1Y.clone()),
+        }
+    }
+
+    pub fn scalar(&self, field: &dyn Field) -> Self {
+        let value = field.value();
+        let time = match value.real().to_integer() {
+            Some(i) => i,
+            None => unreachable!(),
+        };
+        let time: usize = time.to_usize().expect("Unwrap to usize failed");
+        if time == 0 {
+            Self::identity()
+        } else {
+            double_and_add!(time, self.clone(), Self::identity())
         }
     }
 }
 
 impl EllipticCurveCyclicSubgroupSecp256k1 {
-    fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1 {
+    pub fn G_p() -> EllipticCurveCyclicSubgroupSecp256k1 {
         EllipticCurveCyclicSubgroupSecp256k1 {
             x: Box::new(SECP256k1X.clone()),
             y: Box::new(SECP256k1Y.clone()),
         }
     }
+
+    pub fn scalar(&self, field: &dyn Field) -> Self {
+        let value = field.value();
+        let time = match value.real().to_integer() {
+            Some(i) => i,
+            None => unreachable!(),
+        };
+        let time = time.secure_pow_mod(
+            &Integer::from(1),
+            &Integer::from_str_radix(Self::N, 16).expect("Scalar parse from string failed"),
+        );
+        let time: usize = time.to_usize().expect("Unwrap to usize failed");
+        if time == 0 {
+            Self::identity()
+        } else {
+            double_and_add!(time, self.clone(), Self::identity())
+        }
+    }
 }
 
 impl EllipticCurveGroupSecp256r1 {
-    fn G_p() -> EllipticCurveCyclicSubgroupSecp256r1 {
+    pub fn G_p() -> EllipticCurveCyclicSubgroupSecp256r1 {
         EllipticCurveCyclicSubgroupSecp256r1 {
             x: Box::new(SECP256r1X.clone()),
             y: Box::new(SECP256r1Y.clone()),
         }
     }
+
+    pub fn scalar(&self, field: &dyn Field) -> Self {
+        let value = field.value();
+        let time = match value.real().to_integer() {
+            Some(i) => i,
+            None => unreachable!(),
+        };
+        let time: usize = time.to_usize().expect("Unwrap to usize failed");
+        if time == 0 {
+            Self::identity()
+        } else {
+            double_and_add!(time, self.clone(), Self::identity())
+        }
+    }
 }
 
 impl EllipticCurveCyclicSubgroupSecp256r1 {
-    fn G_p() -> EllipticCurveCyclicSubgroupSecp256r1 {
+    pub fn G_p() -> EllipticCurveCyclicSubgroupSecp256r1 {
         EllipticCurveCyclicSubgroupSecp256r1 {
             x: Box::new(SECP256r1X.clone()),
             y: Box::new(SECP256r1Y.clone()),
         }
+    }
+
+    pub fn scalar(&self, field: &dyn Field) -> Self {
+        let value = field.value();
+        let time = match value.real().to_integer() {
+            Some(i) => i,
+            None => unreachable!(),
+        };
+        let time = time.secure_pow_mod(
+            &Integer::from(1),
+            &Integer::from_str_radix(Self::N, 16).expect("Scalar parse from string failed"),
+        );
+        let time: usize = time.to_usize().expect("Unwrap to usize failed");
+        double_and_add!(time, self.clone(), Self::identity())
     }
 }
 
@@ -271,8 +331,7 @@ macro_rules! elliptic_curve_group {
                     v3
                 };
                 let ry: RegisterField = {
-                    let v1 =
-                        from_incomplete!(rx.clone() - x1.clone(), versionx);
+                    let v1 = from_incomplete!(rx.clone() - x1.clone(), versionx);
                     let v2 = from_incomplete!(m.clone() * v1, versionx);
                     let v3 = from_incomplete!(y1.clone() + v2, versionx);
                     v3
@@ -307,8 +366,7 @@ macro_rules! cyclic_add_group {
         impl Group for $Struct {
             fn inverse(&self) -> Self {
                 let a: Complex = Integer::from(0)
-                    % Integer::from_str_radix($Struct::N, 16)
-                        .expect("Cannot parse from string")
+                    % Integer::from_str_radix($Struct::N, 16).expect("Cannot parse from string")
                     + Complex::new(COMPLEX_PREC);
 
                 let rf: RegisterField = from_field_boxed!(self.x);
@@ -329,15 +387,16 @@ macro_rules! cyclic_add_group {
                 let version = x2.version();
                 let x1 = match x1.into_inner().real().to_integer() {
                     Some(i) => i,
-                    None => unreachable!();
+                    None => unreachable!(),
                 };
                 let x2 = match x2.into_inner().real().to_integer() {
                     Some(i) => i,
-                    None => unreachable!();
+                    None => unreachable!(),
                 };
                 let N = Integer::from_str_radix($Struct::N, 16).expect("Parse from string failed");
                 let (_, result) = (x1 + x2).div_rem(N);
-                let rx_boxed = choose_field_from_version(result + Complex::new(COMPLEX_PREC), version);
+                let rx_boxed =
+                    choose_field_from_version(result + Complex::new(COMPLEX_PREC), version);
                 $Struct::new(rx_boxed, None)
             }
         }
@@ -351,15 +410,16 @@ macro_rules! cyclic_add_group {
                 let version = x2.version();
                 let x1 = match x1.into_inner().real().to_integer() {
                     Some(i) => i,
-                    None => unreachable!();
+                    None => unreachable!(),
                 };
                 let x2 = match x2.into_inner().real().to_integer() {
                     Some(i) => i,
-                    None => unreachable!();
+                    None => unreachable!(),
                 };
                 let N = Integer::from_str_radix($Struct::N, 16).expect("Parse from string failed");
                 let result = x2.secure_pow_mod(&x1, &N);
-                let rx_boxed = choose_field_from_version(result + Complex::new(COMPLEX_PREC), version);
+                let rx_boxed =
+                    choose_field_from_version(result + Complex::new(COMPLEX_PREC), version);
                 $Struct::new(rx_boxed, None)
             }
         }
@@ -377,6 +437,20 @@ macro_rules! jacobian_group {
                 let y = y.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
                 let z = z.unwrap_or(Box::new(FiniteFieldSecp256k1::new("0")));
                 $Struct { x, y, z }
+            }
+
+            pub fn scalar(&self, field: &dyn Field) -> Self {
+                let value = field.value();
+                let time = match value.real().to_integer() {
+                    Some(i) => i,
+                    None => unreachable!(),
+                };
+                let time: usize = time.to_usize().expect("Unwrap to usize failed");
+                if time == 0 {
+                    Self::identity()
+                } else {
+                    double_and_add!(time, self.clone(), Self::identity())
+                }
             }
         }
 
@@ -417,10 +491,7 @@ macro_rules! jacobian_group {
                 let A = Integer::from_str_radix($Struct::A, 16).expect("Parse String Failed");
                 let ysq = sy.pow(2);
                 let s = from_incomplete!(sx.mat_mul(4) * ysq.clone(), version);
-                let m = from_incomplete!(
-                    sx.pow(2).mat_mul(3) + sz.pow(4).mat_mul(A),
-                    version
-                );
+                let m = from_incomplete!(sx.pow(2).mat_mul(3) + sz.pow(4).mat_mul(A), version);
                 let nx = from_incomplete!(m.pow(2) - s.mat_mul(2), version);
                 let ny = {
                     let v1 = from_incomplete!(s - nx.clone(), version);

@@ -53,6 +53,23 @@ macro_rules! field_trait_implement {
             }
         }
 
+        impl From<$Struct> for Integer {
+            fn from(field: $Struct) -> Integer {
+                match field.value.real().to_integer() {
+                    Some(i) => i,
+                    None => unreachable!()
+                }
+            }
+        }
+
+        impl From<Integer> for $Struct {
+            fn from(int: Integer) -> $Struct {
+                $Struct {
+                    value: Complex::new(COMPLEX_PREC) + int
+                }
+            }
+        }
+
         impl $Struct {
             #[inline]
             pub fn new(input: &str) -> Self {
@@ -62,28 +79,32 @@ macro_rules! field_trait_implement {
                 }
             }
 
+            pub fn scalar(&self, field: &dyn Field) -> Self {
+                let value = field.value();
+                let time = match value.real().to_integer() {
+                    Some(i) => i,
+                    None => unreachable!(),
+                };
+                let time: usize = time.to_usize().expect("Unwrap to usize failed");
+                if time == 0 {
+                    Self::identity()
+                } else {
+                    double_and_add!(time, self.clone(), Self::identity())
+                }
+            }
+
             pub fn mat_mul<T>(&self, x: T) -> Self
             where
-                T: Into<Integer>,
+                T: Into<Self>,
             {
-                let int: Integer = x.into();
-                let ident = $Struct::identity();
-                let this = $Struct {
-                    value: int + Complex::new(COMPLEX_PREC),
-                };
-                this * ident
+                self.scalar(&x.into())
             }
 
             pub fn pow<T>(&self, x: T) -> Self
             where
-            T: Into<Integer>,
+            T: Into<Self>,
             {
-                let int: Integer = x.into();
-                let ident = $Struct::identity();
-                let this = $Struct {
-                    value: int + Complex::new(COMPLEX_PREC),
-                };
-                this * ident
+                self.scalar(&x.into())
             }
 
             #[inline]

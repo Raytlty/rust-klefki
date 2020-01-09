@@ -1,3 +1,19 @@
+macro_rules! double_and_add {
+    ($time: expr, $addend: expr, $init: expr) => {{
+        let mut result = $init;
+        let mut time = $time;
+        let mut addend = $addend;
+        while time > 0 {
+            if time & 1 == 1 {
+                result += &addend;
+            }
+            addend = addend.clone() + addend;
+            time >>= 1;
+        }
+        result
+    }};
+}
+
 macro_rules! int_to_integer {
     ($($T: ty)*; $Imp: ident $method: ident) => {$(
         impl $Imp for $T {
