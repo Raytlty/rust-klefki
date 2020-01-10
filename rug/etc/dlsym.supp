@@ -1,8 +1,0 @@
-{
-   dlsym
-   Memcheck:Leak
-   ...
-   fun:_dlerror_run
-   fun:dlsym
-   ...
-}
