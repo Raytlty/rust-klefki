@@ -1,6 +1,8 @@
 #[macro_use]
 mod macros;
-mod field;
-mod group;
+pub mod field;
+pub mod group;
 mod registers;
-mod traits;
+pub mod traits;
+
+pub use registers::{InCompleteField, RegisterField};

@@ -1,1 +1,1 @@
-mod algebra;
+pub mod algebra;

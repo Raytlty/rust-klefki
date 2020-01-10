@@ -66,6 +66,11 @@ pub trait Pow<Rhs = Self> {
     fn pow(&self, rhs: &Rhs) -> Self::Output;
 }
 
+pub trait Xor<Rhs = Self> {
+    type Output;
+    fn xor(&self, rhs: &Rhs) -> Self::Output;
+}
+
 pub trait Not {
     fn not(&self) -> bool;
 }
