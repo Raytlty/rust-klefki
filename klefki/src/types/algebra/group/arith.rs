@@ -419,7 +419,10 @@ macro_rules! cyclic_add_group {
                     None => unreachable!(),
                 };
                 let N = Integer::from_str_radix($Struct::N, 16).expect("Parse from string failed");
-                let result = x2.secure_pow_mod(&x1, &N);
+                let result = match x2.pow_mod(&x1, &N) {
+                    Ok(i) => i,
+                    Err(_) => unreachable!(),
+                };
                 let rx_boxed =
                     choose_field_from_version(result + Complex::new(COMPLEX_PREC), version);
                 $Struct::new(rx_boxed, None)

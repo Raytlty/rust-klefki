@@ -15,7 +15,10 @@ impl RSA {
         let n = p.clone() * q.clone();
         let rsa_mod = (p.clone() - Integer::from(1)).lcm(&(q.clone() - Integer::from(1)));
         let (gcd, a, b) = Integer::from(Self::e).gcd_cofactors(rsa_mod.clone(), Integer::new());
-        let d = a % rsa_mod;
+        let d = match a.pow_mod(&Integer::from(1), &rsa_mod) {
+            Ok(i) => i,
+            Err(_) => unreachable!(),
+        };
 
         RSA { p, q, n, d }
     }
@@ -29,7 +32,7 @@ impl RSA {
     }
 
     pub fn encrypt_with_pub_key(&self, block: Integer) -> Integer {
-        block.secure_pow_mod(&Integer::from(65547), &self.n)
+        block.secure_pow_mod(&Integer::from(RSA::e), &self.n)
     }
 
     pub fn decrypt_with_pub_key(&self, block: Integer) -> Integer {
@@ -62,5 +65,33 @@ impl RSA {
             decrypted.push(de)
         }
         String::from_utf8(decrypted).expect("Decrypt Message Failed.")
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::{Integer, RSA};
+    use crate::constrant::{SECP256K1_N, SECP256K1_P};
+
+    #[test]
+    fn test_rsa_block_encrypt() {
+        let secp1 = Integer::from_str_radix(SECP256K1_P, 16).expect("Parse from string failed.");
+        let secp2 = Integer::from_str_radix(SECP256K1_N, 16).expect("Parse from string failed.");
+        let rsa_instance = RSA::new(secp1, secp2);
+        let encrypted = rsa_instance.encrypt_with_pub_key(Integer::from(1200));
+        assert_eq!(
+            rsa_instance.decrypt_with_priv_key(encrypted),
+            Integer::from(1200)
+        );
+    }
+
+    #[test]
+    fn test_rsa_string_ecrypt() {
+        let secp1 = Integer::from_str_radix(SECP256K1_P, 16).expect("Parse from string failed.");
+        let secp2 = Integer::from_str_radix(SECP256K1_N, 16).expect("Parse from string failed.");
+        let rsa_instance = RSA::new(secp1, secp2);
+        let s = String::from("hello crypto");
+        let encrypted = rsa_instance.encrypt_string(s.clone());
+        assert_eq!(rsa_instance.decrypt_string(encrypted), s);
     }
 }
