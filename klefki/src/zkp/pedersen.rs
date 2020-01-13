@@ -29,17 +29,26 @@ mod test {
 
     #[test]
     fn test_v_multi() {
+        let ex1 = FiniteFieldSecp256k1::new("5");
+        let ex2 = FiniteFieldSecp256k1::new("6");
+        let ex3 = FiniteFieldSecp256k1::new("7");
         let v1 = vec![
-            EllipticCurveGroupSecp256k1::default(),
-            EllipticCurveGroupSecp256k1::default(),
+            EllipticCurveGroupSecp256k1::new(Box::new(ex1.clone()), Some(Box::new(ex2.clone()))),
+            EllipticCurveGroupSecp256k1::new(Box::new(ex2.clone()), Some(Box::new(ex3.clone()))),
         ];
         let v2: Vec<Box<dyn Field>> = vec![
             Box::new(FiniteFieldSecp256k1::new("2")),
             Box::new(FiniteFieldSecp256r1::new("3")),
         ];
         let g = v_multi(v1, v2);
-        let g2 = EllipticCurveGroupSecp256k1::default().mat_mul(&FiniteFieldSecp256k1::new("2"))
-            + EllipticCurveGroupSecp256k1::default().mat_mul(&FiniteFieldSecp256r1::new("3"));
+        let g2 =
+            EllipticCurveGroupSecp256k1::new(Box::new(ex1.clone()), Some(Box::new(ex2.clone())))
+                .mat_mul(&FiniteFieldSecp256k1::new("2"))
+                + EllipticCurveGroupSecp256k1::new(
+                    Box::new(ex2.clone()),
+                    Some(Box::new(ex3.clone())),
+                )
+                .mat_mul(&FiniteFieldSecp256r1::new("3"));
         assert_eq!(g == g2, true);
     }
 }
