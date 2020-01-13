@@ -3,5 +3,7 @@ pub mod constrant;
 pub mod crypto;
 pub mod number;
 pub mod types;
+pub mod zkp;
+
 #[macro_use]
 extern crate lazy_static;

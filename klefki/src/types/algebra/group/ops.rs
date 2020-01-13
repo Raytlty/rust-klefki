@@ -10,7 +10,7 @@ use crate::types::algebra::{
         EllipticCurveGroupSecp256r1, JacobianGroupSecp256k1, JacobianGroupSecp256r1,
     },
     registers::{InCompleteField, RegisterField},
-    traits::{MatMul, Pow},
+    traits::{MatMul, Pow, Xor},
 };
 use crate::{from_field_boxed, from_incomplete};
 use rug::Complex;
@@ -30,7 +30,51 @@ macro_rules! arith_combat {
                 self.scalar(rhs)
             }
         }
+
+        impl Xor<$Field> for $Group {
+            type Output = $Group;
+            fn xor(&self, rhs: &$Field) -> $Group {
+                self.scalar(rhs)
+            }
+        }
     )*
+
+        impl MatMul<RegisterField> for $Group {
+            type Output = $Group;
+            fn mat_mul(&self, rhs: &RegisterField) -> $Group {
+                match rhs {
+                    RegisterField::V1(field) => self.mat_mul(field),
+                    RegisterField::V2(field) => self.mat_mul(field),
+                    RegisterField::V3(field) => self.mat_mul(field),
+                    RegisterField::V4(field) => self.mat_mul(field),
+                }
+            }
+        }
+
+        impl Pow<RegisterField> for $Group {
+            type Output = $Group;
+            fn pow(&self, rhs: &RegisterField) -> $Group {
+                match rhs {
+                    RegisterField::V1(field) => self.pow(field),
+                    RegisterField::V2(field) => self.pow(field),
+                    RegisterField::V3(field) => self.pow(field),
+                    RegisterField::V4(field) => self.pow(field),
+                }
+            }
+        }
+
+        impl Xor<RegisterField> for $Group {
+            type Output = $Group;
+            fn xor(&self, rhs: &RegisterField) -> $Group {
+                match rhs {
+                    RegisterField::V1(field) => self.xor(field),
+                    RegisterField::V2(field) => self.xor(field),
+                    RegisterField::V3(field) => self.xor(field),
+                    RegisterField::V4(field) => self.xor(field),
+                }
+            }
+        }
+
     };
 }
 
