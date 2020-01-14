@@ -22,20 +22,6 @@ lazy_static! {
     static ref SECP256r1Y: FiniteFieldSecp256r1 = FiniteFieldSecp256r1::new(SECP256R1_GY);
 }
 
-#[macro_export]
-macro_rules! from_incomplete {
-    ($Param: expr, $Version: expr) => {
-        RegisterField::from_incomplete($Param, Some($Version))
-    };
-}
-
-#[macro_export]
-macro_rules! from_field_boxed {
-    ($Param: expr) => {
-        RegisterField::from_field_boxed($Param)
-    };
-}
-
 #[derive(Clone)]
 pub struct EllipticCurveCyclicSubgroupSecp256k1 {
     pub x: Box<dyn Field>,

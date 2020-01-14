@@ -2,6 +2,7 @@
 pub mod constrant;
 pub mod crypto;
 pub mod number;
+#[macro_use]
 pub mod types;
 pub mod zkp;
 

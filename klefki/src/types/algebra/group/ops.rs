@@ -12,7 +12,6 @@ use crate::types::algebra::{
     registers::{InCompleteField, RegisterField},
     traits::{MatMul, Pow, Xor},
 };
-use crate::{from_field_boxed, from_incomplete};
 use rug::Complex;
 
 macro_rules! arith_combat {

@@ -1,4 +1,3 @@
-use crate::from_field_boxed;
 use crate::types::algebra::traits::{Field, Group, MatMul, Xor};
 use crate::types::algebra::{InCompleteField, RegisterField};
 use std::ops::{AddAssign, Mul};
