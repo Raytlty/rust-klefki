@@ -1,5 +1,10 @@
 #![feature(trait_alias)]
-pub mod constrant;
+
+/*! Klefki is a playground for researching elliptic curve group based cryptocoins, such as Bitcoin and Ethereum.
+ All data types & structures are based on mathematical defination of abstract algebra.
+*/
+
+mod constrant;
 pub mod crypto;
 pub mod number;
 #[macro_use]

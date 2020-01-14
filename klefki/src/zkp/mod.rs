@@ -1,1 +1,4 @@
-mod pedersen;
+/*!
+Zero-Knowledge Proof utils.
+*/
+pub mod pedersen;
