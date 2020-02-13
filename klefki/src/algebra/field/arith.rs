@@ -1,8 +1,8 @@
 use crate::constrant::{
     IntPrimitive, COMPLEX_PREC, SECP256K1_N, SECP256K1_P, SECP256R1_N, SECP256R1_P,
 };
-use crate::types::algebra::registers::{InCompleteField, RegisterField};
-use crate::types::algebra::traits::{ConstP, Field, Identity, Not, SecIdentity};
+use crate::algebra::registers::{InCompleteField, RegisterField};
+use crate::algebra::traits::{ConstP, Field, Identity, Not, SecIdentity};
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign, MulAssign, DivAssign};

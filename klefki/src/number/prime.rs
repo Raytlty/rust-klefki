@@ -1,13 +1,39 @@
+//! This is a prime tools about generate a big prime number, which use for RSA and other algorithm.
+
 use rug::{integer::IsPrime, rand::RandState, Assign, Integer};
+
+/// Choose random algorithm to generate prime number
+///
+/// DefaultAlgor is usinng [`NewMerSenneTwister`] algorithm.
+///
+/// [`NewMerSenneTwister`] is fast and has good randomness properties.
+///
+/// [`NewLinearCongruential`]  creates a new random generator with a linear congruential
+/// algorithm <i>X</i> = (<i>a</i> × <i>X</i> + <i>c</i>) mod 2<sup><i>m</i></sup>.
+///
+/// [`NewLinearCongruentialSize`] creates a new random generator with a linear congruential
+/// algorithm like the [`NewLinearCongruential`] method.
+/// For the linear congruential algorithm
+/// <i>X</i> = (<i>a</i> × <i>X</i> + <i>c</i>) mod 2<sup><i>m</i></sup>,
+/// <i>a</i>, <i>c</i> and <i>m</i> are selected from a table
+/// such that at least <i>size</i> bits of each <i>X</i> will be
+/// used, that is <i>m</i>/2 ≥ <i>size</i>. The table only has
+/// values for <i>size</i> ≤ 128; [`None`] will be returned if the
+/// requested size is larger.
+///
+/// [`None`]: https://doc.rust-lang.org/nightly/core/option/enum.Option.html#variant.None
+/// [`NewMerSenneTwister`]: https://docs.rs/rug/1.6.0/rug/rand/struct.RandState.html#method.new_mersenne_twister
+/// [`NewLinearCongruential`]: https://docs.rs/rug/1.6.0/rug/rand/struct.RandState.html#method.new_linear_congruential
+/// [`NewLinearCongruentialSize`]: https://docs.rs/rug/1.6.0/rug/rand/struct.RandState.html#method.new_linear_congruential_size
 pub enum RandomAlgor<'a> {
-    DefaultAlgor,       // Default as NEW_MERSENNE_TWISTER algorithm
-    NewMerSenneTwister, // This algorithm is fast and has good randomness properties.
-    NewLinearCongruential(&'a Integer, u32, u32), // algorithm X = (a × X + c) mod 2 ^ m.
+    DefaultAlgor,
+    NewMerSenneTwister,
+    NewLinearCongruential(&'a Integer, u32, u32),
     NewLinearCongruentialSize(u32),
 }
 
 impl<'a> RandomAlgor<'a> {
-    fn generate_random(&self) -> RandState {
+    pub fn generate_random(&self) -> RandState {
         match self {
             RandomAlgor::DefaultAlgor | RandomAlgor::NewMerSenneTwister => {
                 RandState::new_mersenne_twister()
@@ -25,6 +51,26 @@ impl<'a> RandomAlgor<'a> {
     }
 }
 
+/// Create a generate prime number by givinng bits, reps and random algorithm,
+/// and return a [`Integer`]
+///
+/// bits is [`u32`] and determine the length of prime number, and reps is [`u32`]
+/// determine how much time to inspect the number is prime or not.
+///
+/// ## Example
+///
+/// ```rust
+/// let possible: Integer = generate_prime(1024, 5, None);
+/// println!("{:?}", possible);
+/// let sign = match possible.is_probably_prime(5) {
+///     IsPrime::Yes | IsPrime::Probably => true,
+///     _ => false,
+/// };
+/// assert_eq!(sign, true);
+/// ```
+///
+/// [`Integer`]: https://docs.rs/rug/1.6.0/rug/struct.Integer.html
+/// [`u32`]: https://doc.rust-lang.org/stable/std/primitive.u32.html
 pub fn generate_prime(bits: u32, reps: u32, rand: Option<RandomAlgor>) -> Integer {
     let rand_algor;
     let mut random = if rand.is_none() {

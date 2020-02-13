@@ -1,11 +1,11 @@
-use crate::constrant::COMPLEX_PREC;
-use crate::types::algebra::{
+use crate::algebra::{
     field::{
         FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
         FiniteFieldSecp256r1,
     },
     traits::{Field, Identity, SecIdentity},
 };
+use crate::constrant::COMPLEX_PREC;
 use rug::{Complex, Float, Integer};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 

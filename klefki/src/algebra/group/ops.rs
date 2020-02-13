@@ -1,5 +1,4 @@
-use crate::constrant::COMPLEX_PREC;
-use crate::types::algebra::{
+use crate::algebra::{
     field::{
         FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
         FiniteFieldSecp256r1,
@@ -12,7 +11,7 @@ use crate::types::algebra::{
     registers::{InCompleteField, RegisterField},
     traits::{MatMul, Pow, Xor},
 };
-use crate::{from_field_boxed, from_incomplete};
+use crate::constrant::COMPLEX_PREC;
 use rug::Complex;
 
 macro_rules! arith_combat {

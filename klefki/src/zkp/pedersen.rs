@@ -1,6 +1,4 @@
-use crate::from_field_boxed;
-use crate::types::algebra::traits::{Field, Group, MatMul, Xor};
-use crate::types::algebra::{InCompleteField, RegisterField};
+use crate::algebra::{Field, Group, InCompleteField, MatMul, RegisterField, Xor};
 use std::ops::{AddAssign, Mul};
 
 pub fn v_multi<G>(g: Vec<G>, f: Vec<Box<dyn Field>>) -> G
@@ -48,8 +46,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::types::algebra::field::{FiniteFieldSecp256k1, FiniteFieldSecp256r1};
-    use crate::types::algebra::group::EllipticCurveGroupSecp256k1;
+    use crate::algebra::field::{FiniteFieldSecp256k1, FiniteFieldSecp256r1};
+    use crate::algebra::group::EllipticCurveGroupSecp256k1;
 
     #[test]
     fn test_v_multi() {

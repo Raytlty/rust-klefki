@@ -9,12 +9,12 @@ pub struct RSA {
 }
 
 impl RSA {
-    const e: u32 = 65537;
+    const E: u32 = 65537;
 
     pub fn new(p: Integer, q: Integer) -> Self {
         let n = p.clone() * q.clone();
         let rsa_mod = (p.clone() - Integer::from(1)).lcm(&(q.clone() - Integer::from(1)));
-        let (gcd, a, b) = Integer::from(Self::e).gcd_cofactors(rsa_mod.clone(), Integer::new());
+        let (gcd, a, b) = Integer::from(Self::E).gcd_cofactors(rsa_mod.clone(), Integer::new());
         let d = match a.pow_mod(&Integer::from(1), &rsa_mod) {
             Ok(i) => i,
             Err(_) => unreachable!(),
@@ -24,7 +24,7 @@ impl RSA {
     }
 
     pub fn public_key(&self) -> (Integer, Integer) {
-        (self.n.clone(), Integer::from(65537))
+        (self.n.clone(), Integer::from(RSA::E))
     }
 
     pub fn private_key(&self) -> (Integer, Integer) {
@@ -32,11 +32,11 @@ impl RSA {
     }
 
     pub fn encrypt_with_pub_key(&self, block: Integer) -> Integer {
-        block.secure_pow_mod(&Integer::from(RSA::e), &self.n)
+        block.secure_pow_mod(&Integer::from(RSA::E), &self.n)
     }
 
     pub fn decrypt_with_pub_key(&self, block: Integer) -> Integer {
-        block.secure_pow_mod(&Integer::from(RSA::e), &self.n)
+        block.secure_pow_mod(&Integer::from(RSA::E), &self.n)
     }
 
     pub fn encrypt_with_priv_key(&self, block: Integer) -> Integer {
