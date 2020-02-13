@@ -1,3 +1,7 @@
+/*!
+Abstract Algebra Types
+*/
+
 #[macro_use]
 mod macros;
 pub mod field;

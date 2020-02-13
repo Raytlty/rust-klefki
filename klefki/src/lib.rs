@@ -8,7 +8,7 @@ mod constrant;
 pub mod crypto;
 pub mod number;
 #[macro_use]
-pub mod types;
+pub mod algebra;
 pub mod zkp;
 
 #[macro_use]

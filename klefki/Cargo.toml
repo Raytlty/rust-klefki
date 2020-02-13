@@ -13,3 +13,9 @@ features = ["integer", "float", "rand", "complex"]
 
 [dependencies]
 lazy_static = "1.4.0"
+
+[package.metadata.docs.rs]
+rustdoc-args = [
+    "--html-in-header",
+    "katex.html",
+]

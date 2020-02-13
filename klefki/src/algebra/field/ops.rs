@@ -44,7 +44,7 @@ macro_rules! arith_prim {
     )*};
 }
 
-use crate::types::algebra::field::{
+use crate::algebra::field::{
     FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
     FiniteFieldSecp256r1,
 };

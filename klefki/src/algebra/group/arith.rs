@@ -1,14 +1,14 @@
-use crate::constrant::{
-    IntPrimitive, COMPLEX_PREC, SECP256K1_A, SECP256K1_B, SECP256K1_GX, SECP256K1_GY, SECP256K1_N,
-    SECP256K1_P, SECP256R1_A, SECP256R1_B, SECP256R1_GX, SECP256R1_GY, SECP256R1_N, SECP256R1_P,
-};
-use crate::types::algebra::field::{
+use crate::algebra::field::{
     FiniteFieldCyclicSecp256k1, FiniteFieldCyclicSecp256r1, FiniteFieldSecp256k1,
     FiniteFieldSecp256r1,
 };
-use crate::types::algebra::registers::{InCompleteField, RegisterField, RegisterGroup};
-use crate::types::algebra::traits::{
+use crate::algebra::registers::{InCompleteField, RegisterField, RegisterGroup};
+use crate::algebra::traits::{
     ConstA, ConstB, ConstN, ConstP, Field, Group, Identity, SecGroup, SecIdentity,
+};
+use crate::constrant::{
+    IntPrimitive, COMPLEX_PREC, SECP256K1_A, SECP256K1_B, SECP256K1_GX, SECP256K1_GY, SECP256K1_N,
+    SECP256K1_P, SECP256R1_A, SECP256R1_B, SECP256R1_GX, SECP256R1_GY, SECP256R1_N, SECP256R1_P,
 };
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
@@ -774,11 +774,9 @@ arith_binary_self!(
 mod test {
     use super::EllipticCurveCyclicSubgroupSecp256k1 as CG;
     use super::{SECP256k1X, COMPLEX_PREC, SECP256K1_GX, SECP256K1_GY};
-    use crate::types::algebra::field::{
-        FiniteFieldCyclicSecp256k1 as CF, FiniteFieldSecp256k1 as CF2,
-    };
-    use crate::types::algebra::traits::Field;
-    use crate::types::algebra::traits::Group;
+    use crate::algebra::field::{FiniteFieldCyclicSecp256k1 as CF, FiniteFieldSecp256k1 as CF2};
+    use crate::algebra::traits::Field;
+    use crate::algebra::traits::Group;
     use rug::{Complex, Integer};
 
     #[test]
