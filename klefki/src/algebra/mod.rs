@@ -7,6 +7,7 @@ mod macros;
 pub mod field;
 pub mod group;
 mod registers;
-pub mod traits;
+mod traits;
 
 pub use registers::{InCompleteField, RegisterField};
+pub use traits::{Field, Group, MatMul, Xor};
