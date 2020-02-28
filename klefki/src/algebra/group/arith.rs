@@ -61,18 +61,18 @@ pub struct EllipticCurveCyclicSubgroupSecp256r1 {
 }
 
 macro_rules! arith_binary_bitxor {
-    ($($Big: ty;)*) => {
+    ($Group: ty, $($Field: ident;)*) => {
         $(
-        impl BitXor<$Big> for $Big {
-            type Output = $Big;
+        impl BitXor<$Field> for $Group {
+            type Output = $Group;
 
-            fn bitxor(self, rhs: $Big) -> Self::Output {
+            fn bitxor(self, rhs: $Field) -> Self::Output {
                 self.scalar(&rhs)
             }
         }
 
-        impl BitXorAssign<$Big> for $Big {
-            fn bitxor_assign(&mut self, rhs: $Big) {
+        impl BitXorAssign<$Field> for $Group {
+            fn bitxor_assign(&mut self, rhs: $Field) {
                 *self = {
                     let other = self.clone();
                     other.scalar(&rhs)
@@ -84,12 +84,51 @@ macro_rules! arith_binary_bitxor {
 }
 
 arith_binary_bitxor!(
-    EllipticCurveGroupSecp256k1;
-    EllipticCurveGroupSecp256r1;
-    EllipticCurveCyclicSubgroupSecp256k1;
-    EllipticCurveCyclicSubgroupSecp256r1;
-    JacobianGroupSecp256k1;
-    JacobianGroupSecp256r1;
+    EllipticCurveGroupSecp256k1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    EllipticCurveGroupSecp256r1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    EllipticCurveCyclicSubgroupSecp256k1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    EllipticCurveCyclicSubgroupSecp256r1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    JacobianGroupSecp256k1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    JacobianGroupSecp256r1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
 );
 
 macro_rules! impl_const {
@@ -639,7 +678,7 @@ arith_binary_self!(
     Mul {
         mul,
         |lhs: EllipticCurveGroupSecp256k1, rhs: EllipticCurveGroupSecp256k1| {
-            lhs ^ rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -661,7 +700,7 @@ arith_binary_self!(
     Mul {
         mul,
         |lhs: EllipticCurveGroupSecp256r1, rhs: EllipticCurveGroupSecp256r1| {
-            lhs ^ rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -683,7 +722,7 @@ arith_binary_self!(
     Mul {
         mul,
         |lhs: EllipticCurveCyclicSubgroupSecp256k1, rhs: EllipticCurveCyclicSubgroupSecp256k1| {
-            lhs ^ rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -705,7 +744,7 @@ arith_binary_self!(
     Mul {
         mul,
         |lhs: EllipticCurveCyclicSubgroupSecp256r1, rhs: EllipticCurveCyclicSubgroupSecp256r1| {
-            lhs ^ rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -727,7 +766,7 @@ arith_binary_self!(
     Mul {
         mul,
         |lhs: JacobianGroupSecp256k1, rhs: JacobianGroupSecp256k1| {
-            lhs ^ rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -740,7 +779,7 @@ arith_binary_self!(
     Mul {
         mul,
         |lhs: JacobianGroupSecp256r1, rhs: JacobianGroupSecp256r1| {
-            lhs ^ rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
