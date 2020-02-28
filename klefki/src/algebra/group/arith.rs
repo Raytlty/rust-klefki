@@ -13,7 +13,7 @@ use crate::constrant::{
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
 use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{BitXor, BitXorAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 lazy_static! {
     static ref SECP256k1X: FiniteFieldSecp256k1 = FiniteFieldSecp256k1::new(SECP256K1_GX);
@@ -59,6 +59,38 @@ pub struct EllipticCurveCyclicSubgroupSecp256r1 {
     pub x: Box<dyn Field>,
     pub y: Box<dyn Field>,
 }
+
+macro_rules! arith_binary_bitxor {
+    ($($Big: ty;)*) => {
+        $(
+        impl BitXor<$Big> for $Big {
+            type Output = $Big;
+
+            fn bitxor(self, rhs: $Big) -> Self::Output {
+                self.scalar(&rhs)
+            }
+        }
+
+        impl BitXorAssign<$Big> for $Big {
+            fn bitxor_assign(&mut self, rhs: $Big) {
+                *self = {
+                    let other = self.clone();
+                    other.scalar(&rhs)
+                };
+            }
+        }
+        )*
+    };
+}
+
+arith_binary_bitxor!(
+    EllipticCurveGroupSecp256k1;
+    EllipticCurveGroupSecp256r1;
+    EllipticCurveCyclicSubgroupSecp256k1;
+    EllipticCurveCyclicSubgroupSecp256r1;
+    JacobianGroupSecp256k1;
+    JacobianGroupSecp256r1;
+);
 
 macro_rules! impl_const {
     () => {};
@@ -604,19 +636,10 @@ elliptic_curve_group!(EllipticCurveCyclicSubgroupSecp256r1);
 
 arith_binary_self!(
     EllipticCurveGroupSecp256k1, EllipticCurveGroupSecp256k1;
-    Add {
-        add,
-        |lhs: EllipticCurveGroupSecp256k1, rhs: EllipticCurveGroupSecp256k1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: EllipticCurveGroupSecp256k1, rhs: EllipticCurveGroupSecp256k1| {
-            lhs + rhs
+            lhs ^ rhs
         }
     };
     MulAssign {
@@ -635,19 +658,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     EllipticCurveGroupSecp256r1, EllipticCurveGroupSecp256r1;
-    Add {
-        add,
-        |lhs: EllipticCurveGroupSecp256r1, rhs: EllipticCurveGroupSecp256r1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: EllipticCurveGroupSecp256r1, rhs: EllipticCurveGroupSecp256r1| {
-            lhs + rhs
+            lhs ^ rhs
         }
     };
     MulAssign {
@@ -666,19 +680,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     EllipticCurveCyclicSubgroupSecp256k1, EllipticCurveCyclicSubgroupSecp256k1;
-    Add {
-        add,
-        |lhs: EllipticCurveCyclicSubgroupSecp256k1, rhs: EllipticCurveCyclicSubgroupSecp256k1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: EllipticCurveCyclicSubgroupSecp256k1, rhs: EllipticCurveCyclicSubgroupSecp256k1| {
-            lhs + rhs
+            lhs ^ rhs
         }
     };
     MulAssign {
@@ -697,19 +702,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     EllipticCurveCyclicSubgroupSecp256r1, EllipticCurveCyclicSubgroupSecp256r1;
-    Add {
-        add,
-        |lhs: EllipticCurveCyclicSubgroupSecp256r1, rhs: EllipticCurveCyclicSubgroupSecp256r1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: EllipticCurveCyclicSubgroupSecp256r1, rhs: EllipticCurveCyclicSubgroupSecp256r1| {
-            lhs + rhs
+            lhs ^ rhs
         }
     };
     MulAssign {
@@ -728,19 +724,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     JacobianGroupSecp256k1, JacobianGroupSecp256k1;
-    Add {
-        add,
-        |lhs: JacobianGroupSecp256k1, rhs: JacobianGroupSecp256k1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: JacobianGroupSecp256k1, rhs: JacobianGroupSecp256k1| {
-            lhs + rhs
+            lhs ^ rhs
         }
     };
     MulAssign {
@@ -750,19 +737,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     JacobianGroupSecp256r1, JacobianGroupSecp256r1;
-    Add {
-        add,
-        |lhs: JacobianGroupSecp256r1, rhs: JacobianGroupSecp256r1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: JacobianGroupSecp256r1, rhs: JacobianGroupSecp256r1| {
-            lhs + rhs
+            lhs ^ rhs
         }
     };
     MulAssign {

@@ -1,34 +1,34 @@
 use crate::algebra::{Field, Group, InCompleteField, MatMul, RegisterField, Xor};
 use std::ops::{AddAssign, Mul};
 
-pub fn v_multi<G>(g: Vec<G>, f: Vec<Box<dyn Field>>) -> G
-where
-    G: Group + MatMul<RegisterField, Output = G> + AddAssign<G>,
-{
-    let mut results = g[0].mat_mul(&from_field_boxed!(&f[0]));
-    for (x, y) in g[1..].iter().zip(f[1..].iter()) {
-        results += x.mat_mul(&from_field_boxed!(y));
-    }
-    results
-}
+//pub fn v_multi<G>(g: Vec<G>, f: Vec<Box<dyn Field>>) -> G
+//where
+//G: Group + MatMul<RegisterField, Output = G> + AddAssign<G>,
+//{
+//let mut results = g[0].mat_mul(&from_field_boxed!(&f[0]));
+//for (x, y) in g[1..].iter().zip(f[1..].iter()) {
+//results += x.mat_mul(&from_field_boxed!(y));
+//}
+//results
+//}
 
-pub fn commitment<Gp>(x: &Box<dyn Field>, r: &Box<dyn Field>, H: Gp, G: Gp) -> Gp
-where
-    Gp: Group + Mul<Gp, Output = Gp> + Xor<RegisterField, Output = Gp>,
-{
-    G.xor(&from_field_boxed!(x)) * H.xor(&from_field_boxed!(r))
-}
+//pub fn commitment<Gp>(x: &Box<dyn Field>, r: &Box<dyn Field>, H: Gp, G: Gp) -> Gp
+//where
+//Gp: Group + Mul<Gp, Output = Gp> + Xor<RegisterField, Output = Gp>,
+//{
+//G.xor(&from_field_boxed!(x)) * H.xor(&from_field_boxed!(r))
+//}
 
-pub fn vertex_commitment<Gp>(x: Vec<Box<dyn Field>>, r: &Box<dyn Field>, H: Gp, G: Vec<Gp>) -> Gp
-where
-    Gp: Group
-        + MatMul<RegisterField, Output = Gp>
-        + AddAssign<Gp>
-        + Mul<Gp, Output = Gp>
-        + Xor<RegisterField, Output = Gp>,
-{
-    v_multi(G, x) * H.xor(&from_field_boxed!(r))
-}
+//pub fn vertex_commitment<Gp>(x: Vec<Box<dyn Field>>, r: &Box<dyn Field>, H: Gp, G: Vec<Gp>) -> Gp
+//where
+//Gp: Group
+//+ MatMul<RegisterField, Output = Gp>
+//+ AddAssign<Gp>
+//+ Mul<Gp, Output = Gp>
+//+ Xor<RegisterField, Output = Gp>,
+//{
+//v_multi(G, x) * H.xor(&from_field_boxed!(r))
+//}
 
 //pub fn matrix_commitment<Gp>(x: Vec<Vec<Box<dyn Field>>>, r: &Box<dyn Field>, H: Gp, G: Vec<Gp>) -> Gp
 //where
