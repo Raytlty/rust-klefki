@@ -12,6 +12,7 @@ use crate::constrant::{
 };
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
+use std::fmt::{Debug, Formatter as FmtFormatter, Result as FmtResult};
 use std::marker::PhantomData;
 use std::ops::{BitXor, BitXorAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -80,6 +81,18 @@ macro_rules! arith_binary_bitxor {
             }
         }
         )*
+
+        impl BitXor<RegisterField> for $Group {
+            type Output = $Group;
+            fn bitxor(self, rhs: RegisterField) -> $Group {
+                match rhs {
+                    RegisterField::V1(field) => self.bitxor(field),
+                    RegisterField::V2(field) => self.bitxor(field),
+                    RegisterField::V3(field) => self.bitxor(field),
+                    RegisterField::V4(field) => self.bitxor(field),
+                }
+            }
+        }
     };
 }
 
@@ -317,6 +330,21 @@ macro_rules! elliptic_curve_group {
             }
         }
 
+        impl Debug for $Struct {
+            fn fmt(&self, f: &mut FmtFormatter<'_>) -> FmtResult {
+                let name = std::any::type_name::<$Struct>()
+                    .split("::")
+                    .collect::<Vec<&str>>();
+                write!(
+                    f,
+                    "{} {{ x: {:?}, y: {:?} }}",
+                    name[name.len() - 1],
+                    from_field_boxed!(&self.x),
+                    from_field_boxed!(&self.y)
+                )
+            }
+        }
+
         impl Identity for $Struct {
             fn identity() -> Self {
                 $Struct::default()
@@ -422,6 +450,21 @@ macro_rules! cyclic_add_group {
             }
         }
 
+        impl Debug for $Struct {
+            fn fmt(&self, f: &mut FmtFormatter<'_>) -> FmtResult {
+                let name = std::any::type_name::<$Struct>()
+                    .split("::")
+                    .collect::<Vec<&str>>();
+                write!(
+                    f,
+                    "{} {{ x: {:?}, y: {:?} }}",
+                    name[name.len() - 1],
+                    from_field_boxed!(&self.x),
+                    from_field_boxed!(&self.y)
+                )
+            }
+        }
+
         impl Group for $Struct {
             fn inverse(&self) -> Self {
                 let a: Complex = Integer::from(0)
@@ -490,6 +533,22 @@ macro_rules! cyclic_add_group {
 
 macro_rules! jacobian_group {
     ($Struct: ident) => {
+        impl Debug for $Struct {
+            fn fmt(&self, f: &mut FmtFormatter<'_>) -> FmtResult {
+                let name = std::any::type_name::<$Struct>()
+                    .split("::")
+                    .collect::<Vec<&str>>();
+                write!(
+                    f,
+                    "{} {{ x: {:?}, y: {:?} z: {:?} }}",
+                    name[name.len() - 1],
+                    from_field_boxed!(&self.x),
+                    from_field_boxed!(&self.y),
+                    from_field_boxed!(&self.z),
+                )
+            }
+        }
+
         impl $Struct {
             pub fn new(
                 x: Box<dyn Field>,
@@ -802,5 +861,10 @@ mod test {
         let minus_g = g.clone() - g.clone();
         assert_eq!(minus_g.x.value(), Complex::with_val(COMPLEX_PREC, (0, 0)));
         assert_eq!(minus_g.y.value(), Complex::with_val(COMPLEX_PREC, (0, 0)));
+    }
+
+    #[test]
+    fn test_bitxor() {
+        let g = CG::G_p();
     }
 }

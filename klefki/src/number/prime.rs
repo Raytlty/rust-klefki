@@ -60,6 +60,9 @@ impl<'a> RandomAlgor<'a> {
 /// ## Example
 ///
 /// ```rust
+///use rug::{Integer, integer::IsPrime};
+///use klefki::number::prime::generate_prime;
+///
 /// let possible: Integer = generate_prime(1024, 5, None);
 /// println!("{:?}", possible);
 /// let sign = match possible.is_probably_prime(5) {
