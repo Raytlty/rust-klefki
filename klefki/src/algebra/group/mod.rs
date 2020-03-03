@@ -31,7 +31,7 @@
 
 mod arith;
 //mod cmp;
-mod ops;
+//mod ops;
 
 pub use arith::{
     choose_field_from_version, EllipticCurveCyclicSubgroupSecp256k1,

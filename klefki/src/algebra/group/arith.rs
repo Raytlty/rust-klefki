@@ -12,8 +12,9 @@ use crate::constrant::{
 };
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
+use std::fmt::{Debug, Formatter as FmtFormatter, Result as FmtResult};
 use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{BitXor, BitXorAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 lazy_static! {
     static ref SECP256k1X: FiniteFieldSecp256k1 = FiniteFieldSecp256k1::new(SECP256K1_GX);
@@ -59,6 +60,89 @@ pub struct EllipticCurveCyclicSubgroupSecp256r1 {
     pub x: Box<dyn Field>,
     pub y: Box<dyn Field>,
 }
+
+macro_rules! arith_binary_bitxor {
+    ($Group: ty, $($Field: ident;)*) => {
+        $(
+        impl BitXor<$Field> for $Group {
+            type Output = $Group;
+
+            fn bitxor(self, rhs: $Field) -> Self::Output {
+                self.scalar(&rhs)
+            }
+        }
+
+        impl BitXorAssign<$Field> for $Group {
+            fn bitxor_assign(&mut self, rhs: $Field) {
+                *self = {
+                    let other = self.clone();
+                    other.scalar(&rhs)
+                };
+            }
+        }
+        )*
+
+        impl BitXor<RegisterField> for $Group {
+            type Output = $Group;
+            fn bitxor(self, rhs: RegisterField) -> $Group {
+                match rhs {
+                    RegisterField::V1(field) => self.bitxor(field),
+                    RegisterField::V2(field) => self.bitxor(field),
+                    RegisterField::V3(field) => self.bitxor(field),
+                    RegisterField::V4(field) => self.bitxor(field),
+                }
+            }
+        }
+    };
+}
+
+arith_binary_bitxor!(
+    EllipticCurveGroupSecp256k1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    EllipticCurveGroupSecp256r1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    EllipticCurveCyclicSubgroupSecp256k1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    EllipticCurveCyclicSubgroupSecp256r1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    JacobianGroupSecp256k1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
+
+arith_binary_bitxor!(
+    JacobianGroupSecp256r1,
+    FiniteFieldSecp256k1;
+    FiniteFieldSecp256r1;
+    FiniteFieldCyclicSecp256k1;
+    FiniteFieldCyclicSecp256r1;
+);
 
 macro_rules! impl_const {
     () => {};
@@ -246,6 +330,21 @@ macro_rules! elliptic_curve_group {
             }
         }
 
+        impl Debug for $Struct {
+            fn fmt(&self, f: &mut FmtFormatter<'_>) -> FmtResult {
+                let name = std::any::type_name::<$Struct>()
+                    .split("::")
+                    .collect::<Vec<&str>>();
+                write!(
+                    f,
+                    "{} {{ x: {:?}, y: {:?} }}",
+                    name[name.len() - 1],
+                    from_field_boxed!(&self.x),
+                    from_field_boxed!(&self.y)
+                )
+            }
+        }
+
         impl Identity for $Struct {
             fn identity() -> Self {
                 $Struct::default()
@@ -351,6 +450,21 @@ macro_rules! cyclic_add_group {
             }
         }
 
+        impl Debug for $Struct {
+            fn fmt(&self, f: &mut FmtFormatter<'_>) -> FmtResult {
+                let name = std::any::type_name::<$Struct>()
+                    .split("::")
+                    .collect::<Vec<&str>>();
+                write!(
+                    f,
+                    "{} {{ x: {:?}, y: {:?} }}",
+                    name[name.len() - 1],
+                    from_field_boxed!(&self.x),
+                    from_field_boxed!(&self.y)
+                )
+            }
+        }
+
         impl Group for $Struct {
             fn inverse(&self) -> Self {
                 let a: Complex = Integer::from(0)
@@ -419,6 +533,22 @@ macro_rules! cyclic_add_group {
 
 macro_rules! jacobian_group {
     ($Struct: ident) => {
+        impl Debug for $Struct {
+            fn fmt(&self, f: &mut FmtFormatter<'_>) -> FmtResult {
+                let name = std::any::type_name::<$Struct>()
+                    .split("::")
+                    .collect::<Vec<&str>>();
+                write!(
+                    f,
+                    "{} {{ x: {:?}, y: {:?} z: {:?} }}",
+                    name[name.len() - 1],
+                    from_field_boxed!(&self.x),
+                    from_field_boxed!(&self.y),
+                    from_field_boxed!(&self.z),
+                )
+            }
+        }
+
         impl $Struct {
             pub fn new(
                 x: Box<dyn Field>,
@@ -604,19 +734,10 @@ elliptic_curve_group!(EllipticCurveCyclicSubgroupSecp256r1);
 
 arith_binary_self!(
     EllipticCurveGroupSecp256k1, EllipticCurveGroupSecp256k1;
-    Add {
-        add,
-        |lhs: EllipticCurveGroupSecp256k1, rhs: EllipticCurveGroupSecp256k1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: EllipticCurveGroupSecp256k1, rhs: EllipticCurveGroupSecp256k1| {
-            lhs + rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -635,19 +756,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     EllipticCurveGroupSecp256r1, EllipticCurveGroupSecp256r1;
-    Add {
-        add,
-        |lhs: EllipticCurveGroupSecp256r1, rhs: EllipticCurveGroupSecp256r1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: EllipticCurveGroupSecp256r1, rhs: EllipticCurveGroupSecp256r1| {
-            lhs + rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -666,19 +778,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     EllipticCurveCyclicSubgroupSecp256k1, EllipticCurveCyclicSubgroupSecp256k1;
-    Add {
-        add,
-        |lhs: EllipticCurveCyclicSubgroupSecp256k1, rhs: EllipticCurveCyclicSubgroupSecp256k1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: EllipticCurveCyclicSubgroupSecp256k1, rhs: EllipticCurveCyclicSubgroupSecp256k1| {
-            lhs + rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -697,19 +800,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     EllipticCurveCyclicSubgroupSecp256r1, EllipticCurveCyclicSubgroupSecp256r1;
-    Add {
-        add,
-        |lhs: EllipticCurveCyclicSubgroupSecp256r1, rhs: EllipticCurveCyclicSubgroupSecp256r1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: EllipticCurveCyclicSubgroupSecp256r1, rhs: EllipticCurveCyclicSubgroupSecp256r1| {
-            lhs + rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -728,19 +822,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     JacobianGroupSecp256k1, JacobianGroupSecp256k1;
-    Add {
-        add,
-        |lhs: JacobianGroupSecp256k1, rhs: JacobianGroupSecp256k1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: JacobianGroupSecp256k1, rhs: JacobianGroupSecp256k1| {
-            lhs + rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -750,19 +835,10 @@ arith_binary_self!(
 
 arith_binary_self!(
     JacobianGroupSecp256r1, JacobianGroupSecp256r1;
-    Add {
-        add,
-        |lhs: JacobianGroupSecp256r1, rhs: JacobianGroupSecp256r1| {
-            lhs.op(&rhs)
-        }
-    };
-    AddAssign {
-        add_assign
-    };
     Mul {
         mul,
         |lhs: JacobianGroupSecp256r1, rhs: JacobianGroupSecp256r1| {
-            lhs + rhs
+            lhs.op(&rhs)
         }
     };
     MulAssign {
@@ -785,5 +861,10 @@ mod test {
         let minus_g = g.clone() - g.clone();
         assert_eq!(minus_g.x.value(), Complex::with_val(COMPLEX_PREC, (0, 0)));
         assert_eq!(minus_g.y.value(), Complex::with_val(COMPLEX_PREC, (0, 0)));
+    }
+
+    #[test]
+    fn test_bitxor() {
+        let g = CG::G_p();
     }
 }

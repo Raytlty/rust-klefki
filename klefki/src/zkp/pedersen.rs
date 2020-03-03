@@ -1,33 +1,42 @@
 use crate::algebra::{Field, Group, InCompleteField, MatMul, RegisterField, Xor};
-use std::ops::{AddAssign, Mul};
+use std::fmt::Debug;
+use std::ops::{BitXor, BitXorAssign, Mul, MulAssign};
 
 pub fn v_multi<G>(g: Vec<G>, f: Vec<Box<dyn Field>>) -> G
 where
-    G: Group + MatMul<RegisterField, Output = G> + AddAssign<G>,
+    G: Group + MulAssign<G> + BitXor<RegisterField, Output = G> + Default + Debug,
 {
-    let mut results = g[0].mat_mul(&from_field_boxed!(&f[0]));
-    for (x, y) in g[1..].iter().zip(f[1..].iter()) {
-        results += x.mat_mul(&from_field_boxed!(y));
+    let mut sign = true;
+    let mut result = G::default();
+    for (x, y) in g.into_iter().zip(f.into_iter()) {
+        println!("{:?}", result);
+        if sign {
+            sign = false;
+            result = x ^ from_field_boxed!(&y);
+        } else {
+            result *= (x ^ from_field_boxed!(&y));
+        }
     }
-    results
+    result
 }
 
 pub fn commitment<Gp>(x: &Box<dyn Field>, r: &Box<dyn Field>, H: Gp, G: Gp) -> Gp
 where
-    Gp: Group + Mul<Gp, Output = Gp> + Xor<RegisterField, Output = Gp>,
+    Gp: Group + Mul<Gp, Output = Gp> + BitXor<RegisterField, Output = Gp> + Default + Debug,
 {
-    G.xor(&from_field_boxed!(x)) * H.xor(&from_field_boxed!(r))
+    (G ^ from_field_boxed!(x)) * (H ^ from_field_boxed!(r))
 }
 
 pub fn vertex_commitment<Gp>(x: Vec<Box<dyn Field>>, r: &Box<dyn Field>, H: Gp, G: Vec<Gp>) -> Gp
 where
     Gp: Group
-        + MatMul<RegisterField, Output = Gp>
-        + AddAssign<Gp>
+        + MulAssign<Gp>
         + Mul<Gp, Output = Gp>
-        + Xor<RegisterField, Output = Gp>,
+        + BitXor<RegisterField, Output = Gp>
+        + Default
+        + Debug,
 {
-    v_multi(G, x) * H.xor(&from_field_boxed!(r))
+    v_multi(G, x) * (H ^ from_field_boxed!(r))
 }
 
 //pub fn matrix_commitment<Gp>(x: Vec<Vec<Box<dyn Field>>>, r: &Box<dyn Field>, H: Gp, G: Vec<Gp>) -> Gp
@@ -64,13 +73,12 @@ mod test {
         ];
         let g = v_multi(v1, v2);
         let g2 =
-            EllipticCurveGroupSecp256k1::new(Box::new(ex1.clone()), Some(Box::new(ex2.clone())))
-                .mat_mul(&FiniteFieldSecp256k1::new("2"))
-                + EllipticCurveGroupSecp256k1::new(
+            (EllipticCurveGroupSecp256k1::new(Box::new(ex1.clone()), Some(Box::new(ex2.clone())))
+                ^ FiniteFieldSecp256k1::new("2"))
+                * (EllipticCurveGroupSecp256k1::new(
                     Box::new(ex2.clone()),
                     Some(Box::new(ex3.clone())),
-                )
-                .mat_mul(&FiniteFieldSecp256r1::new("3"));
+                ) ^ FiniteFieldSecp256r1::new("3"));
         assert_eq!(g == g2, true);
     }
 }

@@ -30,7 +30,7 @@ macro_rules! double_and_add {
     ($time: expr, $addend: expr, $init: expr) => {{
         let mut result = $init;
         for i in 0..$time {
-            result += &$addend;
+            result *= &$addend;
         }
         result
     }};

@@ -13,9 +13,11 @@ use crate::algebra::{
 };
 use crate::constrant::COMPLEX_PREC;
 use rug::Complex;
+use std::ops::{BitXor, BitXorAssign};
 
 macro_rules! arith_combat {
     ($Group: ty, $($Field: ident;)*) => { $(
+
         impl MatMul<$Field> for $Group {
             type Output = $Group;
             fn mat_mul(&self, rhs: &$Field) -> $Group {

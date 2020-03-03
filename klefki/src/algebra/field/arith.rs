@@ -1,11 +1,11 @@
+use crate::algebra::registers::{InCompleteField, RegisterField};
+use crate::algebra::traits::{ConstP, Field, Identity, Not, SecIdentity};
 use crate::constrant::{
     IntPrimitive, COMPLEX_PREC, SECP256K1_N, SECP256K1_P, SECP256R1_N, SECP256R1_P,
 };
-use crate::algebra::registers::{InCompleteField, RegisterField};
-use crate::algebra::traits::{ConstP, Field, Identity, Not, SecIdentity};
 use rug::{ops::Pow, Assign, Complex, Float, Integer};
 use std::any::{Any, TypeId};
-use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign, MulAssign, DivAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FiniteFieldSecp256k1 {
@@ -45,7 +45,6 @@ impl<'a> ConstP<'a> for FiniteFieldCyclicSecp256r1 {
 
 macro_rules! field_trait_implement {
     ($Struct: ident) => {
-
         impl Default for $Struct {
             fn default() -> Self {
                 let p = $Struct::P;
@@ -57,7 +56,7 @@ macro_rules! field_trait_implement {
             fn from(field: $Struct) -> Integer {
                 match field.value.real().to_integer() {
                     Some(i) => i,
-                    None => unreachable!()
+                    None => unreachable!(),
                 }
             }
         }
@@ -65,7 +64,7 @@ macro_rules! field_trait_implement {
         impl From<Integer> for $Struct {
             fn from(int: Integer) -> $Struct {
                 $Struct {
-                    value: Complex::new(COMPLEX_PREC) + int
+                    value: Complex::new(COMPLEX_PREC) + int,
                 }
             }
         }
@@ -75,7 +74,7 @@ macro_rules! field_trait_implement {
             pub fn new(input: &str) -> Self {
                 $Struct {
                     value: Integer::from_str_radix(input, 16).expect("Cannot parse from string")
-                            + Complex::new(COMPLEX_PREC),
+                        + Complex::new(COMPLEX_PREC),
                 }
             }
 
@@ -102,7 +101,7 @@ macro_rules! field_trait_implement {
 
             pub fn pow<T>(&self, x: T) -> Self
             where
-            T: Into<Self>,
+                T: Into<Self>,
             {
                 self.scalar(&x.into())
             }
@@ -229,8 +228,7 @@ macro_rules! field_trait_implement {
                     unreachable!();
                 };
                 let a = self.value.clone() + ng.value;
-                let b =
-                    Integer::from_str_radix($Struct::P, 16).expect("Cannot parse from string");
+                let b = Integer::from_str_radix($Struct::P, 16).expect("Cannot parse from string");
                 let v: Complex = self.do_mod(&a, &b);
                 InCompleteField::new(v)
             }
@@ -248,8 +246,7 @@ macro_rules! field_trait_implement {
                     unreachable!();
                 };
                 let a = self.value.clone() * ng.value;
-                let b =
-                    Integer::from_str_radix($Struct::P, 16).expect("Cannot parse from string");
+                let b = Integer::from_str_radix($Struct::P, 16).expect("Cannot parse from string");
                 let v: Complex = self.do_mod(&a, &b);
                 InCompleteField::new(v)
             }
@@ -271,7 +268,7 @@ field_trait_implement!(FiniteFieldCyclicSecp256r1);
 arith_binary_self!(
     FiniteFieldSecp256k1,FiniteFieldSecp256k1;
     Add {
-        add, 
+        add,
         |lhs: FiniteFieldSecp256k1, rhs: FiniteFieldSecp256k1| {
             lhs.op(&rhs.value)
         }
@@ -305,7 +302,7 @@ arith_binary_self!(
 arith_binary_self!(
     FiniteFieldSecp256r1,FiniteFieldSecp256r1;
     Add {
-        add, 
+        add,
         |lhs: FiniteFieldSecp256r1, rhs: FiniteFieldSecp256r1| {
             lhs.op(&rhs.value)
         }
@@ -339,7 +336,7 @@ arith_binary_self!(
 arith_binary_self!(
     FiniteFieldCyclicSecp256k1,FiniteFieldCyclicSecp256k1;
     Add {
-        add, 
+        add,
         |lhs: FiniteFieldCyclicSecp256k1, rhs: FiniteFieldCyclicSecp256k1| {
             lhs.op(&rhs.value)
         }
@@ -373,7 +370,7 @@ arith_binary_self!(
 arith_binary_self!(
     FiniteFieldCyclicSecp256r1,FiniteFieldCyclicSecp256r1;
     Add {
-        add, 
+        add,
         |lhs: FiniteFieldCyclicSecp256r1, rhs: FiniteFieldCyclicSecp256r1| {
             lhs.op(&rhs.value)
         }
